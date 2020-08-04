@@ -37,6 +37,7 @@ simple modifications on Windows related formats.
     + [Toggle Flag](#toggle-flag)
     + [Display Mappings](#display-mappings)
 - [Library Information](#library-information)
+- [Resources](#resources)
 
 
 ### Installation
