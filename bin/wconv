@@ -1,0 +1,208 @@
+#!/usr/bin/python3
+
+import sys 
+import binascii
+import argparse
+
+import wconv
+import wconv.uac
+import wconv.sid
+import wconv.sddl
+from termcolor import cprint
+
+
+parser = argparse.ArgumentParser(description='''wconv is a command line utility that can be used to convert
+                                                certain Windows representations into human readable formats.
+                                                Currently the tool supports convertion of ACE, SDDL, SID and
+                                                UAC values.''')
+
+subparsers = parser.add_subparsers(dest='command')
+
+parser_ace = subparsers.add_parser('ace', help='convert integer ace')
+parser_ace.add_argument('ace', nargs='?', metavar='ACE-VALUE', help='integer ace value')
+parser_ace.add_argument('--ace-flags', dest='flags', action='store_true', help='show available ACE flags')
+parser_ace.add_argument('--ace-types', dest='types', action='store_true', help='show available ACE types')
+parser_ace.add_argument('--ace-permissions', dest='permissions', action='store_true', help='show permission definitions for requested type')
+parser_ace.add_argument('--from-string', dest='string', action='store_true', help='interpret ace value als ace-string (sddl format)')
+parser_ace.add_argument('--type', metavar='PERMISSION-TYPE', default='file', help='permission type (default: file)')
+parser_ace.add_argument('-t', '--toggle', metavar='PERMISSION', action='append', default=[], help='toogles specified permission on the ace value')
+parser_ace.add_argument('--trustees', action='store_true', help='display available trustees')
+parser_ace.add_argument('-v', '--verbose', action='store_true', help='verbose output')
+
+parser_sddl = subparsers.add_parser('sddl', help='convert sddl string into readable permissions')
+parser_sddl.add_argument('sddl', nargs='?', metavar='SDDL-STRING', help='sddl string')
+parser_sddl.add_argument('--add-everyone', dest='everyone', action='store_true', help='add full permissions for everyone')
+parser_sddl.add_argument('--add-anonymous', dest='anonymous', action='store_true', help='add full permissions for anonymous')
+parser_sddl.add_argument('-t', '--type', metavar='PERMISSION-TYPE', default='file', help='permission type (default: file)')
+parser_sddl.add_argument('-v', '--verbose', action='store_true', help='verbose output')
+
+parser_sid = subparsers.add_parser('sid', help='convert Windows SecurityIdentifier formats')
+parser_sid.add_argument('sid', nargs='?', metavar='SID-VALUE', help='sid value (default format: base64)')
+parser_sid.add_argument('--to-b64', dest='b64', action='store_true', help='converts formatted sid (S-1-*) to base64')
+parser_sid.add_argument('--raw', action='store_true', help='specify sid as raw hex string (010500...)')
+parser_sid.add_argument('--well-known', dest='known', action='store_true', help='display list of well known sids')
+
+parser_uac = subparsers.add_parser('uac', help='convert integer UserAccountControl')
+parser_uac.add_argument('uac', nargs='?', metavar='UAC-VALUE', help='binary user account control value')
+parser_uac.add_argument('--mapping', action='store_true', help='display UserAccountControl mappings (flags)')
+parser_uac.add_argument('-t', '--toggle', metavar='FLAG', action='append', default=[], help='toogles specified flag on the UserAccountControl value')
+
+args = parser.parse_args()
+
+
+try:
+
+    ##########################################################################
+    #######                    ACE related Actions                      ######
+    ##########################################################################
+    if args.command == 'ace':
+
+        if args.permissions:
+            perm_dict = wconv.ace.get_permission_dict(args.type)
+
+            for key, value in perm_dict.items():
+
+                hex_value = wconv.ace.ACCESS_MASK_HEX_REVERSE[key]
+                hex_value = '{:08x}'.format(hex_value)
+                cprint(f'[+] {hex_value} - {key} - ', 'blue', end='')
+                cprint(value, 'yellow')
+
+            sys.exit(0)
+
+        if args.trustees:
+
+            for key, value in wconv.ace.TRUSTEES.items():
+                cprint(f'[+] {key} - ', 'blue', end='')
+                cprint(value, 'yellow')
+
+            sys.exit(0)
+
+        if args.flags:
+
+            for key, value in wconv.ace.ACE_FLAGS.items():
+                cprint(f'[+] {key} - ', 'blue', end='')
+                cprint(value, 'yellow')
+
+            sys.exit(0)
+        
+        if args.types:
+
+            for key, value in wconv.ace.ACE_TYPES.items():
+                cprint(f'[+] {key} - ', 'blue', end='')
+                cprint(value, 'yellow')
+
+            sys.exit(0)
+
+        if args.ace is not None:
+
+            if args.string:
+                ace = wconv.ace.Ace.from_string(args.ace, args.type)
+
+            elif args.toggle:
+                ace_value = wconv.ace.Ace.toggle_permission(args.ace, args.toggle)
+                ace = wconv.ace.Ace.from_int(ace_value, args.type)
+
+            else:
+                ace = wconv.ace.Ace.from_int(args.ace, args.type)
+
+            ace.pretty_print(verbose=args.verbose)
+            sys.exit(0)
+
+        parser_ace.print_usage()
+
+
+    ##########################################################################
+    #######                    SDDL related Actions                     ######
+    ##########################################################################
+    elif args.command == 'sddl':
+
+        if args.sddl:
+
+            if args.everyone:
+                new_sddl = wconv.sddl.Sddl.add_everyone(args.sddl)
+                cprint('[+] ', 'blue', end='')
+                cprint(new_sddl, 'yellow')
+                sys.exit(0)
+
+            if args.anonymous:
+                new_sddl = wconv.sddl.Sddl.add_anonymous(args.sddl)
+                cprint('[+] ', 'blue', end='')
+                cprint(new_sddl, 'yellow')
+                sys.exit(0)
+
+            sddl = wconv.sddl.Sddl.from_string(args.sddl, args.type)
+            sddl.pretty_print(verbose=args.verbose)
+            sys.exit(0)
+
+        parser_sddl.print_usage()
+
+
+    ##########################################################################
+    #######                     SID related Actions                     ######
+    ##########################################################################
+    elif args.command == 'sid':
+
+        if args.known:
+
+            for key, value in wconv.sid.WELL_KNOWN_SIDS.items():
+                key = key.ljust(25)
+                cprint(f'[+] {key} - ', 'blue', end='')
+                cprint(value, 'yellow')
+            sys.exit(0)
+
+        if args.sid:
+
+            if args.raw:
+                sid = wconv.sid.SecurityIdentifier.from_hex(args.sid)
+
+            elif args.b64:
+                sid = wconv.sid.SecurityIdentifier.from_formatted(args.sid)
+                b64 = sid.to_b64()
+                cprint('[+] ', 'blue', end='')
+                cprint(b64, 'yellow')
+                sys.exit(0)
+
+            else:
+                sid = wconv.sid.SecurityIdentifier.from_b64(args.sid)
+
+            sid.pretty_print()
+            sys.exit(0)
+
+        parser_sid.print_usage()
+
+
+    ##########################################################################
+    #######                     UAC related Actions                     ######
+    ##########################################################################
+    elif args.command == 'uac':
+
+        if args.mapping:
+
+            for key, value in wconv.uac.UAC_DICT.items():
+                key = '{:08x}'.format(key)
+                cprint(f'[+] 0x{key} - ', 'blue', end='')
+                cprint(value, 'yellow')
+            sys.exit(0)
+
+        if args.uac:
+
+            uac = wconv.uac.UserAccountControl(args.uac)
+            if args.toggle:
+                uac.toggle_flag(args.toggle)
+
+            uac.pretty_print()
+            sys.exit(0)
+
+        parser_uac.print_usage()
+
+
+    ##########################################################################
+    #######                     No Command Selected                     ######
+    ##########################################################################
+    else:
+        parser.print_usage()
+
+
+except wconv.WConvException as e:
+        print("[-] Error: " + str(e))
+        sys.exit(1)
