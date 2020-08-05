@@ -543,7 +543,7 @@ class Ace:
         Returns:
             ace_object      (Ace)
         '''
-        ace_string = Ace.clear_parantheses(ace_string)
+        ace_string = Ace.clear_parentheses(ace_string)
 
         ace_split = ace_string.split(';')
         if len(ace_split) != 6:
