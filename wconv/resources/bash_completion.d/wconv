@@ -1,5 +1,8 @@
 #!/bin/bash
 
+type _comp_filter || return
+type _comp_filter_shorts || return
+
 function _wconv() {
 
     local cur prev words cword cline uac_flags ace_permissions permission_types no_completion group_one group_two opts
