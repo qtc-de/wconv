@@ -2,7 +2,6 @@
 
 from termcolor import cprint
 from wconv import WConvException
-from prompt_toolkit import prompt
 
 UAC_DICT = dict([
     (0x00000001, "SCRIPT"),
@@ -78,7 +77,6 @@ class UserAccountControl:
         self.uac_value = uac_int
         self.flags = UserAccountControl.parse_flags(uac_int)
 
-
     def __str__(self):
         '''
         Converts a UserAccountControl object into a simple formatted string. Useful for debugging purposes.
@@ -96,7 +94,6 @@ class UserAccountControl:
 
         return result[:-1]
 
-
     def pretty_print(self):
         '''
         Prints some formatted and colored information about the UserAccountControl object.
@@ -113,7 +110,6 @@ class UserAccountControl:
         for flag in self.flags:
             cprint('[+]\t', 'blue', end='')
             cprint(f'+ {flag}', 'yellow')
-
 
     def toggle_flag(self, flags):
         '''
@@ -134,7 +130,6 @@ class UserAccountControl:
 
             except KeyError:
                 raise WConvException(f"toggle_flag(... - Specified UAC flag '{flag}' does not exist.")
-
 
     def parse_flags(uac_value):
         '''

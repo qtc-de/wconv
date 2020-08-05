@@ -5,8 +5,8 @@ from wconv import WConvException
 
 
 ACE_TYPES = {
-    "A" : "ACCESS_ALLOWED",
-    "D" : "ACCESS_DENIED",
+    "A": "ACCESS_ALLOWED",
+    "D": "ACCESS_DENIED",
     "OA": "ACCESS_ALLOWED_OBJECT",
     "OD": "ACCESS_DENIED_OBJECT",
     "AU": "SYSTEM_AUDIT",
@@ -173,7 +173,8 @@ PERMISSIONS_TOKEN = {
 }
 
 GROUPED_PERMISSIONS = {
-    "FA": "READ_CONTROL,DELETE,WRITE_DAC,WRITE_OWNER,SYNCHRONIZE,READ,WRITE,APPEND,READ_EXTENDED_ATTRIBUTES,WRITE_EXTENDED_ATTRIBUTES,EXECUTE,MEANINGLESS,READ_ATTRIBUTES,WRITE_ATTRIBUTES",
+    "FA": "READ_CONTROL,DELETE,WRITE_DAC,WRITE_OWNER,SYNCHRONIZE,READ,WRITE,APPEND,READ_EXTENDED_ATTRIBUTES, \
+WRITE_EXTENDED_ATTRIBUTES,EXECUTE,MEANINGLESS,READ_ATTRIBUTES,WRITE_ATTRIBUTES",
     "FR": "READ_CONTROL,READ,READ_ATTRIBUTES,READ_EXTENDED_ATTRIBUES,SYNCHRONIZE",
     "FW": "READ_CONTROL,WRITE,WRITE_ATTRIBUTES,WRITE_EXTENDED_ATTRIBUES,APPEND,SYNCHRONIZE",
     "FX": "READ_CONTROL,READ_ATTRIBUTES,EXECUTE,SYNCHRONIZE",
@@ -268,12 +269,12 @@ ACCESS_MASK_HEX_REVERSE = dict([
     ('GX', 0x20000000),
     ('GW', 0x40000000),
     ('GR', 0x80000000),
-                    
+
     ('SD', 0x00010000),
     ('RC', 0x00020000),
     ('WD', 0x00040000),
     ('WO', 0x00080000),
-                    
+
     ('CC', 0x00000001),
     ('DC', 0x00000002),
     ('LC', 0x00000004),
@@ -288,12 +289,27 @@ ACCESS_MASK_HEX_REVERSE = dict([
     ('FR', 0x00020089),
     ('FW', 0x00020116),
     ('FX', 0x000200a0),
-                     
+
     ('KA', 0x000f003f),
     ('KR', 0x00020019),
     ('KW', 0x00020006),
     ('KE', 0x00020019)
 ])
+
+PERM_TYPE_MAPPING = {
+    'file':             dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE),
+    'directory':        dict(GENERIC_PERMISSIONS, **PERMISSIONS_DIRECTORY),
+    'file_map':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE_MAP),
+    'registry':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_REGISTRY),
+    'service':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE),
+    'service_control':  dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE_CONTROL),
+    'process':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_PROCESS),
+    'thread':           dict(GENERIC_PERMISSIONS, **PERMISSIONS_THREAD),
+    'window_station':   dict(GENERIC_PERMISSIONS, **PERMISSIONS_WINDOW_STATION),
+    'desktop':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_DESKTOP),
+    'pipe':             dict(GENERIC_PERMISSIONS, **PERMISSIONS_PIPE),
+    'token':            dict(GENERIC_PERMISSIONS, **PERMISSIONS_TOKEN),
+}
 
 
 def get_permission_dict(permission_type):
@@ -308,31 +324,12 @@ def get_permission_dict(permission_type):
     Returns:
         permission_dict         (dict)          Dictionary containing permission map
     '''
-    if permission_type == 'file':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE)
-    elif permission_type == 'directory':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_DIRECTORY)
-    elif permission_type == 'file_map':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE_MAP)
-    elif permission_type == 'registry':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_REGISTRY)
-    elif permission_type == 'service':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE)
-    elif permission_type == 'service_control':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE_CONTROL)
-    elif permission_type == 'process':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_PROCESS)
-    elif permission_type == 'thread':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_THREAD)
-    elif permission_type == 'window_station':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_WINDOW_STATION)
-    elif permission_type == 'desktop':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_DESKTOP)
-    elif permission_type == 'pipe':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_PIPE)
-    elif permission_type == 'token':
-        return dict(GENERIC_PERMISSIONS, **PERMISSIONS_TOKEN)
-    else:
+    try:
+
+        mapping = PERM_TYPE_MAPPING[permission_type]
+        return mapping
+
+    except KeyError:
         raise WConvException(f"get_permissions_dict(... - Unknown permission type '{permission_type}'")
 
 
@@ -367,7 +364,6 @@ class Ace:
         self.trustee = trustee
         self.numeric = numeric
 
-
     def __str__(self):
         '''
         Outputs a simple string represenation of the ACE. Only used for debugging purposes.
@@ -385,17 +381,16 @@ class Ace:
             result += f'Trustee:\t {self.trustee}\n'
 
         if self.permissions:
-            result += f'Permissions:\n'
+            result += 'Permissions:\n'
             for perm in self.permissions:
                 result += f'\t\t+ {perm}\n'
 
         if self.ace_flags:
-            result += f'ACE Flags:\n'
+            result += 'ACE Flags:\n'
             for flag in self.ace_flags:
                 result += f'\t\t+ {flag}\n'
 
         return result[:-1]
-
 
     def pretty_print(self, indent=' ', verbose=False):
         '''
@@ -436,53 +431,69 @@ class Ace:
                 cprint('[+]', 'blue', end='')
                 cprint(f'{indent}\t\t+ {perm}', 'yellow')
 
-
-    def from_string(ace_string, perm_type='file'):
+    def clear_parentheses(ace_string):
         '''
-        Parses an ace from a string in SDDL representation (e.g. A;OICI;FA;;;BA).
+        Removes the opening and closing parantheses from an ACE string (if present).
 
-        Parameters:
-            ace_string      (string)            ACE string in sddl format
-            perm_type       (string)            Object type the sddl applies to (file, service, ...)
+        Paramaters:
+            ace_string      (string)            ACE string to operate on
 
         Returns:
-            ace_object      (Ace)
+            ace_string      (string)            ACE string without parentheses
         '''
         if ace_string[0] == '(':
             ace_string = ace_string[1:]
+
         if ace_string[-1] == ')':
             ace_string = ace_string[:-1]
 
-        ace_split = ace_string.split(';')
-        if len(ace_split) != 6:
-            raise WConvException(f"from_string(... - Specified value '{ace_string}' is not a valid ACE string.")
+        return ace_string
 
-        try:
-            ace_type = ACE_TYPES[ace_split[0]]
-        except KeyError:
-            raise WConvException(f"from_string(... - Unknown ACE type '{ace_split[0]}'.")
+    def get_ace_flags(ace_flag_string):
+        '''
+        Parses the flag-portion of an ACE string and returns a list of the corresponding
+        ACE flags.
 
+        Paramaters:
+            ace_flag_string (string)            String containing the ACE flags
+
+        Returns:
+            ace_flags       (list[string])      List containing the parsed ACE flags
+        '''
         ace_flags = []
-        for ctr in range(0, len(ace_split[1]), 2):
+
+        for ctr in range(0, len(ace_flag_string), 2):
 
             try:
-                ace_flag = (ace_split[1])[ctr:ctr+2]
+                ace_flag = ace_flag_string[ctr:ctr+2]
                 ace_flag = ACE_FLAGS[ace_flag]
                 ace_flags.append(ace_flag)
 
             except KeyError:
-                raise WConvException(f"from_string(... - Unknown ACE flag '{ace_flag}'.")
+                raise WConvException(f"get_ace_flags(... - Unknown ACE flag '{ace_flag}'.")
 
-        perm_dict = get_permission_dict(perm_type)
-        ace_int = 0
+        return ace_flags
+
+    def get_ace_permissions(ace_permission_string, perm_type='file'):
+        '''
+        Takes the ACE portion containing the permission and returns a list of the corresponding parsed
+        permissions.
+
+        Paramaters:
+            ace_permission_string   (string)        String containing the ACE permissions
+            perm_type               (string)        Permission type (file, service, ...)
+
+        Returns:
+            permissions             (list[string])  List of corresponding permissions
+        '''
         permissions = []
+        perm_dict = get_permission_dict(perm_type)
 
-        for ctr in range(0, len(ace_split[2]), 2):
+        for ctr in range(0, len(ace_permission_string), 2):
 
-            permission = (ace_split[2])[ctr:ctr+2]
+            permission = ace_permission_string[ctr:ctr+2]
 
             try:
-                ace_int += ACCESS_MASK_HEX_REVERSE[permission]
 
                 if permission in GROUPED_PERMISSIONS:
                     permission = GROUPED_PERMISSIONS[permission]
@@ -495,6 +506,58 @@ class Ace:
             except KeyError:
                 raise WConvException(f"from_string(... - Unknown permission name '{permission}'.")
 
+        return permissions
+
+    def get_ace_numeric(ace_permission_string):
+        '''
+        Takes the ACE portion containing the permission and returns the corresponding integer value.
+
+        Paramaters:
+            ace_permission_string   (string)        String containing the ACE permissions
+
+        Returns:
+            ace_int                 (int)           Corresponding integer value
+        '''
+        ace_int = 0
+
+        for ctr in range(0, len(ace_permission_string), 2):
+
+            permission = ace_permission_string[ctr:ctr+2]
+
+            try:
+                ace_int += ACCESS_MASK_HEX_REVERSE[permission]
+
+            except KeyError:
+                raise WConvException(f"from_string(... - Unknown permission name '{permission}'.")
+
+        return ace_int
+
+    def from_string(ace_string, perm_type='file'):
+        '''
+        Parses an ace from a string in SDDL representation (e.g. A;OICI;FA;;;BA).
+
+        Parameters:
+            ace_string      (string)            ACE string in sddl format
+            perm_type       (string)            Object type the sddl applies to (file, service, ...)
+
+        Returns:
+            ace_object      (Ace)
+        '''
+        ace_string = Ace.clear_parentheses(ace_string)
+
+        ace_split = ace_string.split(';')
+        if len(ace_split) != 6:
+            raise WConvException(f"from_string(... - Specified value '{ace_string}' is not a valid ACE string.")
+
+        try:
+            ace_type = ACE_TYPES[ace_split[0]]
+        except KeyError:
+            raise WConvException(f"from_string(... - Unknown ACE type '{ace_split[0]}'.")
+
+        ace_flags = Ace.get_ace_flags(ace_split[1])
+        permissions = Ace.get_ace_permissions(ace_split[2], perm_type)
+        ace_int = Ace.get_ace_numeric(ace_split[2])
+
         object_type = ace_split[3]
         inherited_object_type = ace_split[4]
 
@@ -503,7 +566,6 @@ class Ace:
             trustee = TRUSTEES[trustee]
 
         return Ace(ace_type, ace_flags, permissions, object_type, inherited_object_type, trustee, ace_int)
-
 
     def from_int(integer, perm_type='file'):
         '''
@@ -538,7 +600,6 @@ class Ace:
 
         return Ace(None, None, permissions, None, None, None, ace_int)
 
-
     def toggle_permission(integer, permissions):
         '''
         Takes an ace in integer format and toggles the specified permissions on it.
@@ -561,7 +622,7 @@ class Ace:
                 hex_value = ACCESS_MASK_HEX_REVERSE[permission]
                 ace_int = ace_int ^ hex_value
 
-            except:
+            except KeyError:
                 raise WConvException(f"toggle_permission(... - Unknown permission name '{permission}'")
 
         return "0x{:08x}".format(ace_int)

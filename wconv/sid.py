@@ -2,7 +2,6 @@
 
 import re
 import base64
-import struct
 import binascii
 
 from termcolor import cprint
@@ -138,7 +137,6 @@ class SecurityIdentifier:
         self.formatted_sid = SecurityIdentifier.format_sid(self.parsed_sid)
         self.well_known = SecurityIdentifier.get_well_known(self.formatted_sid)
 
-
     def __str__(self):
         '''
         Returns a simple representation of the SecurityIdentifier object. Useful for
@@ -156,7 +154,6 @@ class SecurityIdentifier:
             result += f' ({self.well_known})'
 
         return result
-
 
     def pretty_print(self):
         '''
@@ -178,7 +175,6 @@ class SecurityIdentifier:
 
         print()
 
-
     def parse_binary(binary):
         '''
         Parse the different components of a binary SID and return them as an array of integers.
@@ -195,18 +191,17 @@ class SecurityIdentifier:
 
         dash_count = binary[1]
         if dash_count * 4 + 8 != len(binary):
-            raise WConvException(f"parse_sid(... - SID has an invalid length.")
+            raise WConvException("parse_sid(... - SID has an invalid length.")
 
         authority = int.from_bytes(binary[2:8], 'big')
 
         items = [revision, authority]
-        for count in range(0, dash_count * 4 , 4):
+        for count in range(0, dash_count * 4, 4):
             item = binary[8 + count:8 + count + 4]
             item = int.from_bytes(item, 'little')
             items.append(item)
-        
-        return items
 
+        return items
 
     def format_sid(sid_value):
         '''
@@ -218,7 +213,7 @@ class SecurityIdentifier:
         Returns:
             result          (string)            SID string
         '''
-        if type(sid_value) == type(b''):
+        if isinstance(sid_value, bytes):
             sid_value = SecurityIdentifier.parse_binary(sid_value)
 
         result = 'S-'
@@ -228,7 +223,6 @@ class SecurityIdentifier:
 
         result = result[0:-1]
         return result
-
 
     def get_well_known(sid_string):
         '''
@@ -247,7 +241,6 @@ class SecurityIdentifier:
 
         return None
 
-
     def to_b64(self):
         '''
         Converts an SecurityIdentifier object to base64.
@@ -260,7 +253,6 @@ class SecurityIdentifier:
         '''
         b64 = base64.b64encode(self.raw_sid)
         return b64.decode('utf-8')
-
 
     def from_b64(b64_sid):
         '''
@@ -279,7 +271,6 @@ class SecurityIdentifier:
 
         return SecurityIdentifier(binary)
 
-
     def from_hex(hex_sid):
         '''
         Creates an SecurityIdentifier object from a hex string.
@@ -297,7 +288,6 @@ class SecurityIdentifier:
 
         return SecurityIdentifier(binary)
 
-    
     def from_formatted(sid_string):
         '''
         Creates an SecurityIdentifier object from an SID string.
