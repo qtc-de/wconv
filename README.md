@@ -45,7 +45,14 @@ simple modifications on Windows related formats.
 ----
 
 *wconv* can be build and installed as a *pip* package. The following
-commands install *wconv* for your current user profile:
+command installs *wconv* for your current user profile:
+
+```console
+$ pip3 install wconv
+```
+
+You can also build *wconv* from source and install it directly by using
+the following commands:
 
 ```console
 $ git clone https://github.com/qtc-de/wconv
@@ -56,9 +63,10 @@ $ pip3 install dist/wconv-0.8.0.tar.gz
 ```
 
 Additionally, *wconv* ships a [bash-completion](./bash_completion.d/wconv) script.
-The completion script is not installed automatically and requires my [completion-helpers](https://github.com/qtc-de/completion-helpers)
-to work correctly. After installing the *completion-helpers*, just copy the completion
-script into your ``~/.bash_completion.d`` folder.
+The completion script is installed automatically, but relies on the [completion-helpers](https://github.com/qtc-de/completion-helpers)
+package. If *completion-helpers* is already installed, autocompletion for *wconv* should
+work after installing the pip package. Otherwise, you may need to copy the completion
+script manually:
 
 ```console
 $ cp ./bash_completion.d/wconv ~/.bash_completion.d
