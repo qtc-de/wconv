@@ -30,7 +30,7 @@ class Sddl:
     re_owner = re.compile('O:([^:()]+)(?=[DGS]:)')
     re_group = re.compile('G:([^:()]+)(?=[DOS]:)')
     re_acl_type = re.compile('([DS]:(P|AI|AR)*)')
-    re_ace = re.compile('\((([^\);]*;){5}[^\)]*)\)')
+    re_ace = re.compile(r'\((([^\);]*;){5}[^\)]*)\)')
 
     def __init__(self, owner, group, acl_type, acl_flags, ace_list):
         '''
@@ -50,7 +50,6 @@ class Sddl:
         self.acl_type = acl_type
         self.acl_flags = acl_flags
         self.ace_list = ace_list
-
 
     def pretty_print(self, indent=' ', verbose=False):
         '''
@@ -87,6 +86,99 @@ class Sddl:
             ace.pretty_print(verbose=verbose, indent=indent + ' '*4)
             cprint('[+] ==================================', 'blue')
 
+    def get_owner(sddl_string):
+        '''
+        Returns the owner contained inside a SDDL string or None if no owner
+        was specified.
+
+        Paramaters:
+            sddl_string         (string)        Portion containing the owner is sufficient
+
+        Returns:
+            owner               (string)        Object owner or None
+        '''
+        match = Sddl.re_owner.search(sddl_string)
+
+        if match:
+
+            owner = match.group(1)
+            if owner in TRUSTEES:
+                owner = TRUSTEES[owner]
+
+        else:
+            owner = None
+
+        return owner
+
+    def get_group(sddl_string):
+        '''
+        Returns the group contained inside a SDDL string or None if no group
+        was specified.
+
+        Paramaters:
+            sddl_string         (string)        Portion containing the group is sufficient
+
+        Returns:
+            group               (string)        Object group or None
+        '''
+        match = Sddl.re_group.search(sddl_string)
+
+        if match:
+
+            group = match.group(1)
+            if group in TRUSTEES:
+                group = TRUSTEES[group]
+
+        else:
+            group = None
+
+        return group
+
+    def get_acl_flags(acl_flags_string):
+        '''
+        Takes the SDDL portion behind the 'D:' (acl flags) and returns a list of the corresponding
+        contained ACL flags.
+
+        Paramaters:
+            acl_flags_strings   (string)        Sring containing the ACL flags ('D:THISONE(')
+
+        Returns:
+            acl_flags           (list[string])  List of contained ACL flags
+        '''
+        acl_flags = []
+
+        if 'P' in acl_flags_string:
+            acl_flags.append(ACL_FLAGS['P'])
+
+        if 'AI' in acl_flags_string:
+            acl_flags.append(ACL_FLAGS['AI'])
+
+        if 'AR' in acl_flags_string:
+            acl_flags.append(ACL_FLAGS['AR'])
+
+        return acl_flags
+
+    def get_ace_list(ace_string, perm_type='file'):
+        '''
+        Takes the SDDL portion that contains the ACEs and returns a list of corresponding ACE objects.
+
+        Paramaters:
+            ace_string          (string)        SDDL portion that contains the ACEs
+            perm_type           (string)        Permission type for ACE generation
+
+        Returns:
+            ace_list            (list[ACE])     Corresponding list of ACE objects
+        '''
+        ace_strings = Sddl.re_ace.findall(ace_string)
+        ace_strings = list(map(lambda x: x[0], ace_strings))
+
+        ace_list = []
+        for ace_string in ace_strings:
+
+            ace = Ace.from_string(ace_string, perm_type=perm_type)
+            ace_list.append(ace)
+
+        return ace_list
 
     def from_string(sddl_string, perm_type='file'):
         '''
@@ -114,7 +206,7 @@ class Sddl:
 
         if not match:
             raise WConvException("parse_sddl(... - Input string is no valid SDDL.")
-        
+
         # Save acl type
         acl_type_split = match.group(0).split(':')
 
@@ -124,55 +216,12 @@ class Sddl:
         else:
             raise WConvException("parse_sddl(... - Input string describes no DACL. Other formarts are not supported.")
 
-        # Save acl flags
-        acl_flags = []
-        acl_flags_string = acl_type_split[1]
+        acl_flags = Sddl.get_acl_flags(acl_type_split[1])
+        owner = Sddl.get_owner(sddl_header_string)
+        group = Sddl.get_group(sddl_header_string)
+        ace_list = Sddl.get_ace_list(sddl_ace_string)
 
-        if 'P' in acl_flags_string:
-            acl_flags.append(ACL_FLAGS['P'])
-
-        if 'AI' in acl_flags_string:
-            acl_flags.append(ACL_FLAGS['AI'])
-
-        if 'AR' in acl_flags_string:
-            acl_flags.append(ACL_FLAGS['AR'])
-
-        # get owner
-        match = Sddl.re_owner.search(sddl_header_string)
-
-        if match:
-
-            owner = match.group(1)
-            if owner in TRUSTEES:
-                owner = TRUSTEES[owner]
-
-        else:
-            owner = None
-
-        # get group
-        match = Sddl.re_group.search(sddl_header_string)
-
-        if match:
-
-            group = match.group(1)
-            if group in TRUSTEES:
-                group = TRUSTEES[group]
-
-        else:
-            group = None
-
-        # get rest of the acls
-        ace_strings = Sddl.re_ace.findall(sddl_ace_string)
-        ace_strings = list(map(lambda x: x[0], ace_strings))
-
-        aces = []
-        for ace_string in ace_strings:
-
-            ace = Ace.from_string(ace_string, perm_type=perm_type)
-            aces.append(ace)
-
-        return Sddl(owner, group, acl_type, acl_flags, aces)
-
+        return Sddl(owner, group, acl_type, acl_flags, ace_list)
 
     def add_everyone(sddl_string):
         '''
@@ -185,7 +234,6 @@ class Sddl:
             sddl_string         (string)            SDDL string with full permissions for everyone
         '''
         return sddl_string + Ace.ace_everyone
-
 
     def add_anonymous(sddl_string):
         '''
