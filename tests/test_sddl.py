@@ -15,7 +15,7 @@ from_string_tests = [
         None, 'Domain Admins', 0x00000020, 0x00000002),
 
     ('D:P(D;CI;WPGA;;;ED)(D;;DCGR;;;AN)', 'DACL', ['PROTECTED'],
-        None,None, 0x10000020, 0x80000002),
+        None, None, 0x10000020, 0x80000002),
 ]
 
 

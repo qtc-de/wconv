@@ -61,7 +61,7 @@ setup(
     long_description_content_type='text/markdown',
 
     packages=find_packages(),
-    package_data = {
+    package_data={
                         name: [
                             'resources/*',
                             'resources/bash_completion.d/*',
