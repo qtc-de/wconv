@@ -555,7 +555,7 @@ class Ace:
             raise WConvException(f"from_string(... - Unknown ACE type '{ace_split[0]}'.")
 
         ace_flags = Ace.get_ace_flags(ace_split[1])
-        permissions = Ace.get_ace_permissions(ace_split[2])
+        permissions = Ace.get_ace_permissions(ace_split[2], perm_type)
         ace_int = Ace.get_ace_numeric(ace_split[2])
 
         object_type = ace_split[3]
