@@ -6,6 +6,8 @@
 Windows related formats into human readable forms. Additionally, it supports
 simple modifications on Windows related formats.
 
+![](https://github.com/qtc-de/wconv/workflows/master%20Python%20CI/badge.svg?branch=master)
+![](https://github.com/qtc-de/wconv/workflows/develop%20Python%20CI/badge.svg?branch=develop)
 ![example-gif](./images/example.gif)
 
 
