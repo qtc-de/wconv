@@ -1,7 +1,7 @@
 #!/bin/bash
 
-type _comp_filter || return
-type _comp_filter_shorts || return
+type _comp_filter &> /dev/null || return
+type _comp_filter_shorts &> /dev/null || return
 
 function _wconv() {
 
