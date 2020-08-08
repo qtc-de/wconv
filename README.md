@@ -64,7 +64,7 @@ $ python3 setup.py sdist
 $ pip3 install dist/*
 ```
 
-Additionally, *wconv* ships a [bash-completion](./bash_completion.d/wconv) script.
+Additionally, *wconv* ships a [bash-completion](./wconv/resources/bash_completion.d/wconv) script.
 The completion script is installed automatically, but relies on the [completion-helpers](https://github.com/qtc-de/completion-helpers)
 package. If *completion-helpers* is already installed, autocompletion for *wconv* should
 work after installing the pip package. Otherwise, you may need to copy the completion
