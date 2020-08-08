@@ -3,7 +3,7 @@
 from os.path import expanduser, abspath, dirname, isdir, isfile
 from shutil import copy
 
-from setuptools import setup, find_packages
+from setuptools import setup
 from setuptools.command.install import install
 
 
@@ -53,14 +53,14 @@ setup(
     url='https://github.com/qtc-de/wconv',
     name=name,
     author='Tobias Neitzel (@qtc_de)',
-    version='1.0.0',
+    version='1.0.1',
     author_email='',
 
     description='wconv - Converting Windows native formats to human readable form',
     long_description=long_description,
     long_description_content_type='text/markdown',
 
-    packages=find_packages(),
+    packages=['wconv'],
     package_data={
                         name: [
                             'resources/*',
