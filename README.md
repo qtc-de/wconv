@@ -71,7 +71,7 @@ work after installing the pip package. Otherwise, you may need to copy the compl
 script manually:
 
 ```console
-$ cp ./bash_completion.d/wconv ~/.bash_completion.d
+$ cp wconv/resources/bash_completion.d/wconv ~/.bash_completion.d
 ```
 
 
