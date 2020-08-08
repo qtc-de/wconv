@@ -61,7 +61,7 @@ $ git clone https://github.com/qtc-de/wconv
 $ cd wconv
 $ pip3 install -r requirements.txt
 $ python3 setup.py sdist
-$ pip3 install dist/wconv-0.8.0.tar.gz
+$ pip3 install dist/*
 ```
 
 Additionally, *wconv* ships a [bash-completion](./bash_completion.d/wconv) script.
