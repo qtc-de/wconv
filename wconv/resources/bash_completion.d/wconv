@@ -1,5 +1,6 @@
 #!/bin/bash
 
+type _comp_contains &> /dev/null || return
 type _comp_filter &> /dev/null || return
 type _comp_filter_shorts &> /dev/null || return
 
