@@ -8,7 +8,7 @@ simple modifications on Windows related formats.
 
 ![](https://github.com/qtc-de/wconv/workflows/master%20Python%20CI/badge.svg?branch=master)
 ![](https://github.com/qtc-de/wconv/workflows/develop%20Python%20CI/badge.svg?branch=develop)
-![example-gif](./images/example.gif)
+![example-gif](https://github.com/qtc-de/wconv/raw/master/images/example.gif)
 
 
 ### Table of Contents
