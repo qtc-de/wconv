@@ -53,7 +53,7 @@ setup(
     url='https://github.com/qtc-de/wconv',
     name=name,
     author='Tobias Neitzel (@qtc_de)',
-    version='1.0.1',
+    version='1.0.2',
     author_email='',
 
     description='wconv - Converting Windows native formats to human readable form',

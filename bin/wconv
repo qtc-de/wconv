@@ -11,10 +11,9 @@ import wconv.sddl
 from termcolor import cprint
 
 
-parser = argparse.ArgumentParser(description='''wconv is a command line utility that can be used to convert
-                                                certain Windows representations into human readable formats.
-                                                Currently the tool supports convertion of ACE, SDDL, SID and
-                                                UAC values.''')
+parser = argparse.ArgumentParser(description='''wconv v1.0.2 - a command line utility to convert Windows specific
+                                                formats into human readable form. Currently, wconv supports convertion
+                                                of ACE, SDDL, SID and UAC values.''')
 
 subparsers = parser.add_subparsers(dest='command')
 
