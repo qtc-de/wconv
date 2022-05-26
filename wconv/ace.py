@@ -325,7 +325,6 @@ def get_permission_dict(permission_type):
         permission_dict         (dict)          Dictionary containing permission map
     '''
     try:
-
         mapping = PERM_TYPE_MAPPING[permission_type]
         return mapping
 

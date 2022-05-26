@@ -219,7 +219,7 @@ class Sddl:
         acl_flags = Sddl.get_acl_flags(acl_type_split[1])
         owner = Sddl.get_owner(sddl_header_string)
         group = Sddl.get_group(sddl_header_string)
-        ace_list = Sddl.get_ace_list(sddl_ace_string)
+        ace_list = Sddl.get_ace_list(sddl_ace_string, perm_type)
 
         return Sddl(owner, group, acl_type, acl_flags, ace_list)
 
