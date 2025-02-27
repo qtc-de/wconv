@@ -5,7 +5,7 @@ from __future__ import annotations
 from colorama import Fore, Style
 
 
-def get_int(integer: str | int):
+def get_int(integer: str | int) -> int:
     '''
     Helper function to convert a value into an integer, but
     do not throw an error if it already is an integer.
@@ -28,7 +28,7 @@ def get_int(integer: str | int):
             raise WConvException(f"from_int(... - Specified value '{integer}' is not an integer.")
 
 
-def print_blue(string, **kwargs):
+def print_blue(string: str, **kwargs) -> None:
     '''
     Wrapper around regular print which prints text
     in blue color.
@@ -43,7 +43,7 @@ def print_blue(string, **kwargs):
     print(Fore.BLUE + string + Style.RESET_ALL, **kwargs)
 
 
-def print_yellow(string, **kwargs):
+def print_yellow(string: str, **kwargs) -> None:
     '''
     Wrapper around regular print which prints text
     in yellow color.
