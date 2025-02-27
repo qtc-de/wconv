@@ -2,9 +2,9 @@
 
 import re
 
-from termcolor import cprint
 from wconv import WConvException
 from wconv.ace import Ace, TRUSTEES
+from wconv.helpers import print_yellow, print_blue
 
 
 SDDL_HEADERS = {
@@ -63,28 +63,28 @@ class Sddl:
         Returns:
             None
         '''
-        cprint(f'[+]{indent}ACL Type:\t', 'blue', end='')
-        cprint(self.acl_type, 'yellow')
+        print_blue(f'[+]{indent}ACL Type:\t', end='')
+        print_yellow(self.acl_type)
 
-        cprint(f'[+]{indent}Owner:\t', 'blue', end='')
-        cprint(self.owner, 'yellow')
+        print_blue(f'[+]{indent}Owner:\t', end='')
+        print_yellow(self.owner)
 
-        cprint(f'[+]{indent}Group:\t', 'blue', end='')
-        cprint(self.group, 'yellow')
+        print_blue(f'[+]{indent}Group:\t', end='')
+        print_yellow(self.group)
 
         if verbose:
-            cprint(f'[+]{indent}ACL Flags:', 'blue')
+            print_blue(f'[+]{indent}ACL Flags:')
 
             for flag in self.acl_flags:
-                cprint('[+]', 'blue', end='')
-                cprint(f'{indent}\t\t+ {flag}', 'yellow')
+                print_blue('[+]', end='')
+                print_yellow(f'{indent}\t\t+ {flag}')
 
-        cprint(f'[+]{indent}ACE List:', 'blue')
-        cprint('[+] ==================================', 'blue')
+        print_blue(f'[+]{indent}ACE List:')
+        print_blue('[+] ==================================')
 
         for ace in self.ace_list:
             ace.pretty_print(verbose=verbose, indent=indent + ' '*4)
-            cprint('[+] ==================================', 'blue')
+            print_blue('[+] ==================================')
 
     def get_owner(sddl_string):
         '''

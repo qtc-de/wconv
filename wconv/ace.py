@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-from termcolor import cprint
 from wconv import WConvException
+from wconv.helpers import print_yellow, print_blue
 
 
 ACE_TYPES = {
@@ -404,31 +404,31 @@ class Ace:
             None
         '''
         if self.ace_type:
-            cprint(f'[+]{indent}ACE Type:\t', 'blue', end='')
-            cprint(self.ace_type, 'yellow')
+            print_blue(f'[+]{indent}ACE Type:\t', end='')
+            print_yellow(self.ace_type)
 
         if self.trustee:
-            cprint(f'[+]{indent}Trustee:\t', 'blue', end='')
-            cprint(self.trustee, 'yellow')
+            print_blue(f'[+]{indent}Trustee:\t', end='')
+            print_yellow(self.trustee)
 
         if self.numeric:
-            cprint(f'[+]{indent}Numeric:\t', 'blue', end='')
-            cprint('0x{:08x}'.format(self.numeric), 'yellow')
+            print_blue(f'[+]{indent}Numeric:\t', end='')
+            print_yellow('0x{:08x}'.format(self.numeric))
 
         if verbose:
             if self.ace_flags:
 
-                cprint(f'[+]{indent}ACE Flags:\t', 'blue')
+                print_blue(f'[+]{indent}ACE Flags:\t')
                 for flag in self.ace_flags:
-                    cprint('[+]', 'blue', end='')
-                    cprint(f'{indent}\t\t+ {flag}', 'yellow')
+                    print_blue('[+]', end='')
+                    print_yellow(f'{indent}\t\t+ {flag}')
 
         if self.permissions:
 
-            cprint(f'[+]{indent}Permissions:\t', 'blue')
+            print_blue(f'[+]{indent}Permissions:\t')
             for perm in self.permissions:
-                cprint('[+]', 'blue', end='')
-                cprint(f'{indent}\t\t+ {perm}', 'yellow')
+                print_blue('[+]', end='')
+                print_yellow(f'{indent}\t\t+ {perm}')
 
     def clear_parentheses(ace_string):
         '''

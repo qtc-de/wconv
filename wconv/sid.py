@@ -4,8 +4,8 @@ import re
 import base64
 import binascii
 
-from termcolor import cprint
 from wconv import WConvException
+from wconv.helpers import print_yellow, print_blue
 
 WELL_KNOWN_SIDS = {
     "S-1-0-0": "NULL",
@@ -165,13 +165,13 @@ class SecurityIdentifier:
         Returns:
             None
         '''
-        cprint('[+] SID: ', 'blue', end='')
-        cprint(self.formatted_sid, 'yellow', end='')
+        print_blue('[+] SID: ', end='')
+        print_yellow(self.formatted_sid, end='')
 
         if self.well_known:
-            cprint(' (', 'blue', end='')
-            cprint(self.well_known, 'yellow', end='')
-            cprint(')', 'blue', end='')
+            print_blue(' (', end='')
+            print_yellow(self.well_known, end='')
+            print_blue(')', end='')
 
         print()
 

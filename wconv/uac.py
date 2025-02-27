@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 
-from termcolor import cprint
 from wconv import WConvException
+from wconv.helpers import print_yellow, print_blue
 
 UAC_DICT = dict([
     (0x00000001, "SCRIPT"),
@@ -104,12 +104,12 @@ class UserAccountControl:
         Returns:
             None
         '''
-        cprint('[+] UserAccountControl:\t', 'blue', end='')
-        cprint('{} (0x{:08x})'.format(self.uac_value, self.uac_value), 'yellow')
+        print_blue('[+] UserAccountControl:\t', end='')
+        print_yellow('{} (0x{:08x})'.format(self.uac_value, self.uac_value))
 
         for flag in self.flags:
-            cprint('[+]\t', 'blue', end='')
-            cprint(f'+ {flag}', 'yellow')
+            print_blue('[+]\t', end='')
+            print_yellow(f'+ {flag}')
 
     def toggle_flag(self, flags):
         '''
