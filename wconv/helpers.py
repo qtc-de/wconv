@@ -1,6 +1,31 @@
 #!/usr/bin/env python3
 
+from __future__ import annotations
+
 from colorama import Fore, Style
+
+
+def get_int(integer: str | int):
+    '''
+    Helper function to convert a value into an integer, but
+    do not throw an error if it already is an integer.
+
+    Parameters:
+        integer         value to convert
+
+    Returns:
+        integer value
+    '''
+    if isinstance(integer, int):
+        return integer
+
+    else:
+
+        try:
+            return int(integer, 0)
+
+        except ValueError:
+            raise WConvException(f"from_int(... - Specified value '{integer}' is not an integer.")
 
 
 def print_blue(string, **kwargs):

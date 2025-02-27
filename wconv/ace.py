@@ -1,7 +1,9 @@
 #!/usr/bin/python3
 
+from __future__ import annotations
+
 from wconv import WConvException
-from wconv.helpers import print_yellow, print_blue
+from wconv.helpers import print_yellow, print_blue, get_int
 
 
 ACE_TYPES = {
@@ -15,6 +17,7 @@ ACE_TYPES = {
     "OL": "SYSTEM_ALARM_OBJECT"
 }
 
+
 ACE_FLAGS = {
     "CI": "CONTAINER_INHERIT",
     "OI": "OBJECT_INHERIT",
@@ -24,6 +27,7 @@ ACE_FLAGS = {
     "SA": "SUCCESSFUL_ACCESS",
     "FA": "FAILED_ACCESS"
 }
+
 
 GENERIC_PERMISSIONS = {
     "GA": "GENERIC_ALL",
@@ -37,6 +41,7 @@ GENERIC_PERMISSIONS = {
     "WO": "WRITE_OWNER"
 }
 
+
 PERMISSIONS_FILE = {
     "CC": "READ",
     "DC": "WRITE",
@@ -48,6 +53,7 @@ PERMISSIONS_FILE = {
     "LO": "READ_ATTRIBUTES",
     "CR": "WRITE_ATTRIBUTES"
 }
+
 
 PERMISSIONS_DIRECTORY = {
     "CC": "LIST",
@@ -61,6 +67,7 @@ PERMISSIONS_DIRECTORY = {
     "CR": "WRITE_ATTRIBUTES"
 }
 
+
 PERMISSIONS_FILE_MAP = {
     "CC": "FILE_MAP_COPY",
     "DC": "FILE_MAP_WRITE",
@@ -69,6 +76,7 @@ PERMISSIONS_FILE_MAP = {
     "RP": "FILE_MAP_EXTEND_MAX_SIZE",
     "WP": "SECTION_MAP_EXECUTE_EXPLICIT"
 }
+
 
 PERMISSIONS_REGISTRY = {
     "CC": "QUERY",
@@ -79,6 +87,7 @@ PERMISSIONS_REGISTRY = {
     "WP": "CREATE_LINK"
 }
 
+
 PERMISSIONS_SERVICE_CONTROL = {
     "CC": "CONNECT",
     "DC": "CREATE_SERVICE",
@@ -87,6 +96,7 @@ PERMISSIONS_SERVICE_CONTROL = {
     "RP": "QUERY_LOCK",
     "WP": "MODIFY_BOOT_CFG"
 }
+
 
 PERMISSIONS_SERVICE = {
     "CC": "QUERY_CONFIG",
@@ -100,6 +110,7 @@ PERMISSIONS_SERVICE = {
     "CR": "USER_DEFINIED"
 }
 
+
 PERMISSIONS_PROCESS = {
     "CC": "TERMINATE",
     "DC": "CREATE_THREAD",
@@ -111,6 +122,7 @@ PERMISSIONS_PROCESS = {
     "LO": "CREATE_PROCESS",
     "CR": "SET_QUOTA"
 }
+
 
 PERMISSIONS_THREAD = {
     "CC": "TERMINATE",
@@ -124,6 +136,7 @@ PERMISSIONS_THREAD = {
     "CR": "IMPERSONATE"
 }
 
+
 PERMISSIONS_WINDOW_STATION = {
     "CC": "ENUM_DESKTOPS",
     "DC": "READ_ATTRIBUTE",
@@ -135,6 +148,7 @@ PERMISSIONS_WINDOW_STATION = {
     "LO": "",
     "CR": "ENUM_WINSTA"
 }
+
 
 PERMISSIONS_DESKTOP = {
     "CC": "READ_OBJECTS",
@@ -148,6 +162,7 @@ PERMISSIONS_DESKTOP = {
     "CR": "SWITCH_DESKTOP"
 }
 
+
 PERMISSIONS_PIPE = {
     "CC": "READ",
     "DC": "WRITE",
@@ -159,6 +174,7 @@ PERMISSIONS_PIPE = {
     "LO": "READ_ATTRIBUTES",
     "CR": "WRITE_ATTRIBUTES"
 }
+
 
 PERMISSIONS_TOKEN = {
     "CC": "ASSIGN_PRIMARY",
@@ -172,6 +188,7 @@ PERMISSIONS_TOKEN = {
     "CR": "ADJUST_SESSION"
 }
 
+
 GROUPED_PERMISSIONS = {
     "FA": "READ_CONTROL,DELETE,WRITE_DAC,WRITE_OWNER,SYNCHRONIZE,READ,WRITE,APPEND,READ_EXTENDED_ATTRIBUTES, \
 WRITE_EXTENDED_ATTRIBUTES,EXECUTE,MEANINGLESS,READ_ATTRIBUTES,WRITE_ATTRIBUTES",
@@ -183,6 +200,7 @@ WRITE_EXTENDED_ATTRIBUTES,EXECUTE,MEANINGLESS,READ_ATTRIBUTES,WRITE_ATTRIBUTES",
     "KW": "READ_CONTROL,SET,CREATE_SUB_KEY",
     "KE": "READ_CONTROL,QUERY,ENUM_SUB_KEYS,NOTIFY"
 }
+
 
 TRUSTEES = {
     'AN': 'Anonymous',
@@ -232,6 +250,7 @@ TRUSTEES = {
     'WR': 'Write restricted Code',
 }
 
+
 ACCESS_MASK_HEX = dict([
     (0x10000000, 'GA'),
     (0x20000000, 'GX'),
@@ -263,6 +282,7 @@ ACCESS_MASK_HEX = dict([
     (0x00020006, 'KW'),
     (0x00020019, 'KE')
 ])
+
 
 ACCESS_MASK_HEX_REVERSE = dict([
     ('GA', 0x10000000),
@@ -296,6 +316,7 @@ ACCESS_MASK_HEX_REVERSE = dict([
     ('KE', 0x00020019)
 ])
 
+
 PERM_TYPE_MAPPING = {
     'file':             dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE),
     'directory':        dict(GENERIC_PERMISSIONS, **PERMISSIONS_DIRECTORY),
@@ -312,17 +333,17 @@ PERM_TYPE_MAPPING = {
 }
 
 
-def get_permission_dict(permission_type):
+def get_permission_dict(permission_type: str) -> dict:
     '''
     The meaning of permission shortnames like 'CC' change depending on the resource
     they are assigned to. This function returns the corresponding dictionary for
     the requested permission type.
 
     Parameters:
-        permission_type         (string)        Permission type (file, service, ...)
+        permission_type         Permission type (file, service, ...)
 
     Returns:
-        permission_dict         (dict)          Dictionary containing permission map
+        Dictionary containing permission map
     '''
     try:
         mapping = PERM_TYPE_MAPPING[permission_type]
@@ -339,21 +360,22 @@ class Ace:
     ace_everyone = '(A;;GAGRGWGXRCSDWDWOSSCCDCLCSWRPWPDTLOCR;;;WD)'
     ace_anonymous = '(A;;GAGRGWGXRCSDWDWOSSCCDCLCSWRPWPDTLOCR;;;AN)'
 
-    def __init__(self, ace_type, ace_flags, permissions, object_type, inherited_object_type, trustee, numeric):
+    def __init__(self, ace_type: str, ace_flags: list[str], permissions: list[str], object_type: str,
+                 inherited_object_type: str, trustee: str, numeric: int) -> None:
         '''
         The init function takes the six different ACE components and constructs an object out of them.
 
         Parameters:
-            ace_type        (string)            ace_type according to the sddl specifications
-            ace_flags       (list[string])      ace_flags according to the sddl specifications
-            permissions     (list[string])      permissions defined inside the ACE
-            object_type     (string)            object_type according to the sddl specifications
-            i_object_type   (string)            inherited_object_type according to the sddl specifications
-            trustee         (string)            trustee the ACE applies to
-            numeric         (int)               Integer ace value
+            ace_type        ace_type according to the sddl specifications
+            ace_flags       ace_flags according to the sddl specifications
+            permissions     permissions defined inside the ACE
+            object_type     object_type according to the sddl specifications
+            i_object_type   inherited_object_type according to the sddl specifications
+            trustee         trustee the ACE applies to
+            numeric         Integer ace value
 
         Returns:
-            ace_object      (Ace)               New generated ACE object
+            None
         '''
         self.ace_type = ace_type
         self.ace_flags = ace_flags
@@ -363,7 +385,7 @@ class Ace:
         self.trustee = trustee
         self.numeric = numeric
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''
         Outputs a simple string represenation of the ACE. Only used for debugging purposes.
 
@@ -371,7 +393,7 @@ class Ace:
             None
 
         Returns:
-            None
+            String representation of ACE
         '''
         if self.ace_type:
             result = f'ACE Type:\t {self.ace_type}\n'
@@ -391,14 +413,14 @@ class Ace:
 
         return result[:-1]
 
-    def pretty_print(self, indent=' ', verbose=False):
+    def pretty_print(self, indent: str = ' ', verbose: bool = False) -> None:
         '''
         Prints some formatted and colored output that represents the ACE. Probably not really
         ideal to be placed inside a library, but for now we can live with that.
 
         Parameters:
-            indent          (string)            Spaces after the '[+]' prefix
-            verbose         (boolean)           Decides if ACE flags are printed
+            indent          Spaces after the '[+]' prefix
+            verbose         Decides if ACE flags are printed
 
         Returns:
             None
@@ -430,15 +452,15 @@ class Ace:
                 print_blue('[+]', end='')
                 print_yellow(f'{indent}\t\t+ {perm}')
 
-    def clear_parentheses(ace_string):
+    def clear_parentheses(ace_string: str) -> str:
         '''
         Removes the opening and closing parantheses from an ACE string (if present).
 
         Paramaters:
-            ace_string      (string)            ACE string to operate on
+            ace_string      ACE string to operate on
 
         Returns:
-            ace_string      (string)            ACE string without parentheses
+            ACE string without parentheses
         '''
         if ace_string[0] == '(':
             ace_string = ace_string[1:]
@@ -448,16 +470,16 @@ class Ace:
 
         return ace_string
 
-    def get_ace_flags(ace_flag_string):
+    def get_ace_flags(ace_flag_string: str) -> list[str]:
         '''
         Parses the flag-portion of an ACE string and returns a list of the corresponding
         ACE flags.
 
         Paramaters:
-            ace_flag_string (string)            String containing the ACE flags
+            ace_flag_string String containing the ACE flags
 
         Returns:
-            ace_flags       (list[string])      List containing the parsed ACE flags
+            List containing the parsed ACE flags
         '''
         ace_flags = []
 
@@ -473,17 +495,17 @@ class Ace:
 
         return ace_flags
 
-    def get_ace_permissions(ace_permission_string, perm_type='file'):
+    def get_ace_permissions(ace_permission_string: str, perm_type: str = 'file') -> list[str]:
         '''
         Takes the ACE portion containing the permission and returns a list of the corresponding parsed
         permissions.
 
         Paramaters:
-            ace_permission_string   (string)        String containing the ACE permissions
-            perm_type               (string)        Permission type (file, service, ...)
+            ace_permission_string   String containing the ACE permissions
+            perm_type               Permission type (file, service, ...)
 
         Returns:
-            permissions             (list[string])  List of corresponding permissions
+            List of corresponding permissions
         '''
         permissions = []
         perm_dict = get_permission_dict(perm_type)
@@ -507,15 +529,15 @@ class Ace:
 
         return permissions
 
-    def get_ace_numeric(ace_permission_string):
+    def get_ace_numeric(ace_permission_string: str) -> int:
         '''
         Takes the ACE portion containing the permission and returns the corresponding integer value.
 
         Paramaters:
-            ace_permission_string   (string)        String containing the ACE permissions
+            ace_permission_string   String containing the ACE permissions
 
         Returns:
-            ace_int                 (int)           Corresponding integer value
+            Corresponding integer value
         '''
         ace_int = 0
 
@@ -531,16 +553,16 @@ class Ace:
 
         return ace_int
 
-    def from_string(ace_string, perm_type='file'):
+    def from_string(ace_string: str, perm_type: str = 'file') -> Ace:
         '''
         Parses an ace from a string in SDDL representation (e.g. A;OICI;FA;;;BA).
 
         Parameters:
-            ace_string      (string)            ACE string in sddl format
-            perm_type       (string)            Object type the sddl applies to (file, service, ...)
+            ace_string      ACE string in sddl format
+            perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
-            ace_object      (Ace)
+            ace_object 
         '''
         ace_string = Ace.clear_parentheses(ace_string)
 
@@ -566,21 +588,18 @@ class Ace:
 
         return Ace(ace_type, ace_flags, permissions, object_type, inherited_object_type, trustee, ace_int)
 
-    def from_int(integer, perm_type='file'):
+    def from_int(integer: str | int, perm_type: str = 'file') -> Ace:
         '''
         Parses an ace from an integer value in string representation.
 
         Parameters:
-            integer         (string)            Integer value as string (hex also allowed)
-            perm_type       (string)            Object type the sddl applies to (file, service, ...)
+            integer         Integer value as string (hex also allowed)
+            perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
-            ace_object      (Ace)
+            ace_object
         '''
-        try:
-            ace_int = int(integer, 0)
-        except ValueError:
-            raise WConvException(f"from_int(... - Specified value '{integer}' is not an integer.")
+        ace_int = get_int(integer)
 
         perm_dict = get_permission_dict(perm_type)
         permissions = []
@@ -599,21 +618,18 @@ class Ace:
 
         return Ace(None, None, permissions, None, None, None, ace_int)
 
-    def toggle_permission(integer, permissions):
+    def toggle_permission(integer: str | int, permissions: list[str]) -> str:
         '''
         Takes an ace in integer format and toggles the specified permissions on it.
 
         Parameters:
-            integer         (string)            Integer value as string (hex also allowed)
-            permissions     (list[string])      List of permission to toggle (GA, GR, GW, GE, CC, ...)
+            integer         Integer value as string (hex also allowed)
+            permissions     List of permission to toggle (GA, GR, GW, GE, CC, ...)
 
         Returns:
-            integer         (string)            Resulting ace value as integer in hex format
+            Resulting ace value as integer in hex format
         '''
-        try:
-            ace_int = int(integer, 0)
-        except ValueError:
-            raise WConvException(f"from_int(... - Specified value '{integer}' is not an integer.")
+        ace_int = get_int(integer)
 
         for permission in permissions:
 

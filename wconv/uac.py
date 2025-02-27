@@ -1,7 +1,10 @@
 #!/usr/bin/python3
 
+from __future__ import annotations
+
 from wconv import WConvException
 from wconv.helpers import print_yellow, print_blue
+
 
 UAC_DICT = dict([
     (0x00000001, "SCRIPT"),
@@ -27,6 +30,7 @@ UAC_DICT = dict([
     (0x01000000, "TRUSTED_TO_AUTH_FOR_DELEGATION"),
     (0x04000000, "PARTIAL_SECRETS_ACCOUNT")
 ])
+
 
 UAC_DICT_REVERSE = dict([
     ("SCRIPT",                          0x00000001),
@@ -59,33 +63,40 @@ class UserAccountControl:
     Represents a UserAccountControl entry of Active Directory.
     '''
 
-    def __init__(self, uac_value):
+    def __init__(self, uac_value: int | str) -> None:
         '''
-        Consrutcs a new UserAccountControl object from an UAC integer in string representation.
+        Consrutcs a new UserAccountControl object from an UAC integer
+        in string representation.
 
         Paramaters:
-            uac_value           (string)            UAC integer value in string format
+            uac_value       UAC integer value in string format
 
         Returns:
-            UserAccountControl  (UserAccountControl)
+            UserAccountControl
         '''
-        try:
-            uac_int = int(uac_value, 0)
-        except ValueError:
-            raise WConvException(f"__init__(... - Specified UAC value '{uac_value}' is not an integer.")
+        if isinstance(uac_value, int):
+            uac_int = uac_value
+
+        else:
+            try:
+                uac_int = int(uac_value, 0)
+
+            except ValueError:
+                raise WConvException(f"__init__(... - Specified UAC value '{uac_value}' is not an integer.")
 
         self.uac_value = uac_int
         self.flags = UserAccountControl.parse_flags(uac_int)
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''
-        Converts a UserAccountControl object into a simple formatted string. Useful for debugging purposes.
+        Converts a UserAccountControl object into a simple formatted string.
+        Useful for debugging purposes.
 
         Paramaters:
             None
 
         Returns:
-            result              (string)            UserAccountControl object in string representation
+            UserAccountControl object in string representation
         '''
         result = f'UserAccountControl: {self.uac_value}\n'
 
@@ -94,7 +105,7 @@ class UserAccountControl:
 
         return result[:-1]
 
-    def pretty_print(self):
+    def pretty_print(self) -> None:
         '''
         Prints some formatted and colored information about the UserAccountControl object.
 
@@ -111,12 +122,12 @@ class UserAccountControl:
             print_blue('[+]\t', end='')
             print_yellow(f'+ {flag}')
 
-    def toggle_flag(self, flags):
+    def toggle_flag(self, flags: list[str]) -> None:
         '''
         Toggles the specified UAC flag on the UserAccountControl object.
 
         Parameters:
-            flags           (list[str])         List of flags to enable on the UAC object
+            flags       List of flags to enable on the UAC object
 
         Returns:
             None
@@ -131,16 +142,16 @@ class UserAccountControl:
             except KeyError:
                 raise WConvException(f"toggle_flag(... - Specified UAC flag '{flag}' does not exist.")
 
-    def parse_flags(uac_value):
+    def parse_flags(uac_value: int) -> list[str]:
         '''
         Takes an integer UserAccountControl value and returns a formatted string
         containing the corresponding flags.
 
         Paramaters:
-            uac_value       (int)               UserAccountControl value
+            uac_value       UserAccountControl value
 
         Returns:
-            flags           (list[string])      List of UAC flags
+            List of UAC flags
         '''
         flags = []
 
