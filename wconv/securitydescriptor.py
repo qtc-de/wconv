@@ -43,7 +43,7 @@ class SecurityDescriptor:
             raise WConvException(f"from_hex(... - No hex content '{hex_string}'.")
 
         hex_string = binascii.hexlify(byte_data)
-        return from_hex(hex_string, perm_type)
+        return SecurityDescriptor.from_hex(hex_string, perm_type)
 
 
     def from_hex(hex_string: str, perm_type: str = 'file') -> SecurityDescriptor:
