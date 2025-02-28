@@ -1,7 +1,6 @@
 #!/usr/bin/python3
 
-import sys 
-import binascii
+import sys
 import argparse
 
 import wconv
@@ -88,7 +87,7 @@ def main():
                     print_yellow(value)
 
                 sys.exit(0)
-            
+
             if args.types:
 
                 for key, value in wconv.ace.ACE_TYPES.items():
@@ -114,7 +113,6 @@ def main():
 
             parser_ace.print_usage()
 
-
         ##########################################################################
         #######                    SDDL related Actions                     ######
         ##########################################################################
@@ -139,7 +137,6 @@ def main():
                 sys.exit(0)
 
             parser_sddl.print_usage()
-
 
         ##########################################################################
         #######                     SID related Actions                     ######
@@ -174,7 +171,6 @@ def main():
 
             parser_sid.print_usage()
 
-
         ##########################################################################
         #######                     UAC related Actions                     ######
         ##########################################################################
@@ -199,14 +195,12 @@ def main():
 
             parser_uac.print_usage()
 
-
         ##########################################################################
         #######                     No Command Selected                     ######
         ##########################################################################
         else:
             parser.print_usage()
 
-
     except wconv.WConvException as e:
-            print("[-] Error: " + str(e))
-            sys.exit(1)
+        print("[-] Error: " + str(e))
+        sys.exit(1)

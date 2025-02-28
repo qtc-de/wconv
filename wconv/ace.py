@@ -562,7 +562,7 @@ class Ace:
             perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
-            ace_object 
+            ace_object
         '''
         ace_string = Ace.clear_parentheses(ace_string)
 
