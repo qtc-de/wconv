@@ -9,6 +9,7 @@ import binascii
 from wconv import WConvException
 from wconv.acl import Acl
 from wconv.sid import SecurityIdentifier
+from wconv.helpers import print_yellow, print_blue
 
 
 class SecurityDescriptor:
@@ -24,6 +25,44 @@ class SecurityDescriptor:
         self.sacl = sacl
         self.dacl = dacl
 
+    def pretty_print(self, indent: str = ' ') -> None:
+        '''
+        Prints the formatted security descriptor
+
+        Parameters:
+            indent          Spaces after the '[+]' prefix
+
+        Returns:
+            None
+        '''
+        print_blue(f'[+]{indent}Owner:\t', end='')
+        print_yellow(self.owner)
+
+        print_blue(f'[+]{indent}Group:\t', end='')
+        print_yellow(self.group)
+
+        print_blue(f'[+]{indent}Ace Count:\t', end='')
+        print_yellow(self.dacl.ace_count)
+
+        print_blue('[+] ACE list:')
+        for ace in self.dacl.aces:
+            print_blue('[+]')
+            ace.pretty_print()
+
+    def filter_aces(self, sid: str) -> list[Ace]:
+        '''
+        Filter ACE objects by a specified SID.
+
+        Parameters:
+            sid             return only ACEs including this sid
+
+        Returns:
+            filtered ACE list
+        '''
+        for ace in self.dacl.aces:
+            if sid in str(ace.trustee):
+
+                yield ace
 
     def from_base64(b64_string: str, perm_type: str = 'file') -> SecurityDescriptor:
         '''
@@ -84,6 +123,6 @@ class SecurityDescriptor:
             pass # TODO
 
         if dacl_offset != 0:
-            Acl.from_bytes(byte_data[dacl_offset:])
+            dacl = Acl.from_bytes(byte_data[dacl_offset:], perm_type)
 
         return SecurityDescriptor(owner_sid, group_sid, sacl, dacl)

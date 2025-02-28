@@ -241,6 +241,30 @@ PERMISSIONS_TOKEN = {
 }
 
 
+PERMISSIONS_AD = {
+    'SD': 'DELETE',
+    'RC': 'READ_CONTROL',
+    'WD': 'WRITE_DACL',
+    'WO': 'WRITE_OWNER',
+    'SY': 'SYNCHRONIZE',
+    'AS': 'ACCESS_SYSTEM_SECURITY',
+    'MA': 'MAXIMUM_ALLOWED',
+    'GR': 'GENERIC_READ',
+    'GW': 'GENERIC_WRITE',
+    'GX': 'GENERIC_EXECUTE',
+    'GA': 'GENERIC_ALL',
+    'CC': 'DS_CREATE_CHILD',
+    'DC': 'DS_DELETE_CHILD',
+    'LC': 'ACTRL_DS_LIST',
+    'SW': 'DS_SELF',
+    'RP': 'DS_READ_PROP',
+    'WP': 'DS_WRITE_PROP',
+    'DT': 'DS_DELETE_TREE',
+    'LO': 'DS_LIST_OBJECT',
+    'CR': 'DS_CONTROL_ACCESS',
+}
+
+
 GROUPED_PERMISSIONS = {
     "FA": "READ_CONTROL,DELETE,WRITE_DAC,WRITE_OWNER,SYNCHRONIZE,READ,WRITE,APPEND,READ_EXTENDED_ATTRIBUTES,\
 WRITE_EXTENDED_ATTRIBUTES,EXECUTE,MEANINGLESS,READ_ATTRIBUTES,WRITE_ATTRIBUTES",
@@ -309,6 +333,9 @@ ACCESS_MASK_HEX = dict([
     (0x40000000, 'GW'),
     (0x80000000, 'GR'),
 
+    (0x02000000, 'MA'),
+    (0x01000000, 'AS'),
+    (0x00100000, 'SY'),
     (0x00010000, 'SD'),
     (0x00020000, 'RC'),
     (0x00040000, 'WD'),
@@ -342,6 +369,9 @@ ACCESS_MASK_HEX_REVERSE = dict([
     ('GW', 0x40000000),
     ('GR', 0x80000000),
 
+    ('MA', 0x02000000),
+    ('AS', 0x01000000),
+    ('SY', 0x00100000),
     ('SD', 0x00010000),
     ('RC', 0x00020000),
     ('WD', 0x00040000),
@@ -370,6 +400,7 @@ ACCESS_MASK_HEX_REVERSE = dict([
 
 
 PERM_TYPE_MAPPING = {
+    'ad':               dict(GENERIC_PERMISSIONS, **PERMISSIONS_AD),
     'file':             dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE),
     'directory':        dict(GENERIC_PERMISSIONS, **PERMISSIONS_DIRECTORY),
     'file_map':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE_MAP),
@@ -496,20 +527,20 @@ class Ace:
                     print_blue('[+]', end='')
                     print_yellow(f'{indent}\t\t+ {flag}')
 
+        if self.object_type:
+            print_blue(f'[+]{indent}Obj Type:\t', end='')
+            print_yellow(self.object_type)
+
+        if self.inherited_object_type:
+            print_blue(f'[+]{indent}IObj Type:\t', end='')
+            print_yellow(self.inherited_object_type)
+
         if self.permissions:
 
             print_blue(f'[+]{indent}Permissions:')
             for perm in self.permissions:
                 print_blue('[+]', end='')
                 print_yellow(f'{indent}\t\t+ {perm}')
-
-        if self.object_type:
-            print_blue(f'[+]{indent}Obj Type:\t', end='')
-            print_yellow(self.object_type)
-
-        if self.inherited_object_type:
-            print_blue(f'[+]{indent}Obj Type:\t', end='')
-            print_yellow(self.inherited_object_type)
 
     def clear_parentheses(ace_string: str) -> str:
         '''

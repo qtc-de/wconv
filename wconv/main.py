@@ -17,6 +17,7 @@ parser = argparse.ArgumentParser(description=f'''wconv {wconv.version} - a comma
                                                 of ACE, SDDL, SID and UAC values.''')
 
 subparsers = parser.add_subparsers(dest='command')
+typelist = ['ad', 'file', 'directory', 'file_map', 'registry', 'service', 'service_control', 'process', 'thread', 'window_station', 'desktop', 'pipe', 'token']
 
 parser_ace = subparsers.add_parser('ace', help='convert integer ace')
 parser_ace.add_argument('ace', nargs='?', metavar='ACE-VALUE', help='integer ace value')
@@ -24,7 +25,7 @@ parser_ace.add_argument('--ace-flags', dest='flags', action='store_true', help='
 parser_ace.add_argument('--ace-types', dest='types', action='store_true', help='show available ACE types')
 parser_ace.add_argument('--ace-permissions', dest='permissions', action='store_true', help='show permission definitions for requested type')
 parser_ace.add_argument('--from-string', dest='string', action='store_true', help='interpret ace value als ace-string (sddl format)')
-parser_ace.add_argument('--type', metavar='PERMISSION-TYPE', default='file', help='permission type (default: file)')
+parser_ace.add_argument('--type', metavar='type', choices=typelist, default='file', help='permission type (default: file)')
 parser_ace.add_argument('-t', '--toggle', metavar='PERMISSION', action='append', default=[], help='toogles specified permission on the ace value')
 parser_ace.add_argument('--trustees', action='store_true', help='display available trustees')
 parser_ace.add_argument('-v', '--verbose', action='store_true', help='verbose output')
@@ -33,7 +34,7 @@ parser_sddl = subparsers.add_parser('sddl', help='convert sddl string into reada
 parser_sddl.add_argument('sddl', nargs='?', metavar='SDDL-STRING', help='sddl string')
 parser_sddl.add_argument('--add-everyone', dest='everyone', action='store_true', help='add full permissions for everyone')
 parser_sddl.add_argument('--add-anonymous', dest='anonymous', action='store_true', help='add full permissions for anonymous')
-parser_sddl.add_argument('-t', '--type', metavar='PERMISSION-TYPE', default='file', help='permission type (default: file)')
+parser_sddl.add_argument('-t', '--type', metavar='type', choices=typelist, default='file', help='permission type (default: file)')
 parser_sddl.add_argument('-v', '--verbose', action='store_true', help='verbose output')
 
 parser_sid = subparsers.add_parser('sid', help='convert Windows SecurityIdentifier formats')
@@ -50,6 +51,8 @@ parser_uac.add_argument('-t', '--toggle', metavar='FLAG', action='append', defau
 parser_desc = subparsers.add_parser('desc', help='convert security descriptor')
 parser_desc.add_argument('desc', nargs='?', metavar='DESC-VALUE', help='security descriptor in base64')
 parser_desc.add_argument('--hex', action='store_true', help='specify the descriptor in hex format instead')
+parser_desc.add_argument('--type', metavar='type', choices=typelist, default='ad', help='permission type (default: ad)')
+parser_desc.add_argument('--sid', metavar='sid', help='filter for a specific sid')
 
 
 def main():
@@ -205,11 +208,20 @@ def main():
         ##########################################################################
         elif args.command == 'desc':
 
+
             if args.hex:
-                wconv.securitydescriptor.SecurityDescriptor.from_hex(args.desc)
+                desc = wconv.securitydescriptor.SecurityDescriptor.from_hex(args.desc, args.type)
 
             else:
-                wconv.securitydescriptor.SecurityDescriptor.from_base64(args.desc)
+                desc = wconv.securitydescriptor.SecurityDescriptor.from_base64(args.desc, args.type)
+
+            if args.sid:
+                for ace in desc.filter_aces(args.sid):
+                    ace.pretty_print()
+                    print_blue('[+]')
+
+            else:
+                desc.pretty_print()
 
         ##########################################################################
         #######                     No Command Selected                     ######

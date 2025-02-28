@@ -43,9 +43,9 @@ class Acl:
         while len(ace_list) != ace_count:
 
             ace_length = struct.unpack("<H", byte_data[pos + 2:pos + 4])[0]
-            ace = Ace.from_bytes(byte_data[pos:pos + ace_length])
+            ace = Ace.from_bytes(byte_data[pos:pos + ace_length], perm_type)
 
             ace_list.append(ace)
             pos += ace_length
 
-            ace.pretty_print()
+        return Acl(revision, ace_count, ace_list)
