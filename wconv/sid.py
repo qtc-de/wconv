@@ -124,18 +124,19 @@ class SecurityIdentifier:
     Represents a Windows Security Identifier.
     '''
 
-    def __init__(self, binary: bytes) -> None:
+    def __init__(self, binary: bytes, check_length: bool = True) -> None:
         '''
         Initializes a SecurityIdentifier object by using its raw (bytes) representation.
 
         Parameters:
             binary              Security identifier in bytes format
+            check_length        Whether to check the length of the inpurt string
 
         Returns:
             SecurityIdentifier
         '''
         self.raw_sid = binary
-        self.parsed_sid = SecurityIdentifier.parse_binary(binary)
+        self.parsed_sid = SecurityIdentifier.parse_binary(binary, check_length)
         self.formatted_sid = SecurityIdentifier.format_sid(self.parsed_sid)
         self.well_known = SecurityIdentifier.get_well_known(self.formatted_sid)
 
@@ -177,12 +178,26 @@ class SecurityIdentifier:
 
         print()
 
-    def parse_binary(binary: bytes) -> list[int]:
+    def get_binary_length(self) -> int:
+        '''
+        Returns the binary length of the sid.
+
+        Parameters:
+            None
+
+        Returns:
+            Binary length of the SID as int
+        '''
+        dash_count = self.binary[1]
+        return  dash_count * 4 + 8
+
+    def parse_binary(binary: bytes, check_length: bool) -> list[int]:
         '''
         Parse the different components of a binary SID and return them as an array of integers.
 
         Parameters:
             binary          binary representation of a SID
+            check_length    whether to check the length of the input string
 
         Returns:
             list of integer components of the SID
@@ -194,7 +209,7 @@ class SecurityIdentifier:
 
         dash_count = binary[1]
 
-        if dash_count * 4 + 8 != len(binary):
+        if check_length and dash_count * 4 + 8 != len(binary):
             raise WConvException("parse_sid(... - SID has an invalid length.")
 
         authority = int.from_bytes(binary[2:8], 'big')

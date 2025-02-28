@@ -41,7 +41,7 @@ def print_blue(string: str, **kwargs) -> None:
     Returns:
         None
     '''
-    print(Fore.BLUE + string + Style.RESET_ALL, **kwargs)
+    print(Fore.BLUE + str(string) + Style.RESET_ALL, **kwargs)
 
 
 def print_yellow(string: str, **kwargs) -> None:
@@ -56,4 +56,4 @@ def print_yellow(string: str, **kwargs) -> None:
     Returns:
         None
     '''
-    print(Fore.YELLOW + string + Style.RESET_ALL, **kwargs)
+    print(Fore.YELLOW + str(string) + Style.RESET_ALL, **kwargs)

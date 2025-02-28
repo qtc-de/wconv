@@ -7,6 +7,7 @@ import wconv
 import wconv.uac
 import wconv.sid
 import wconv.sddl
+import wconv.securitydescriptor
 
 from wconv.helpers import print_yellow, print_blue
 
@@ -45,6 +46,10 @@ parser_uac = subparsers.add_parser('uac', help='convert integer UserAccountContr
 parser_uac.add_argument('uac', nargs='?', metavar='UAC-VALUE', help='binary user account control value')
 parser_uac.add_argument('--mapping', action='store_true', help='display UserAccountControl mappings (flags)')
 parser_uac.add_argument('-t', '--toggle', metavar='FLAG', action='append', default=[], help='toogles specified flag on the UserAccountControl value')
+
+parser_desc = subparsers.add_parser('desc', help='convert security descriptor')
+parser_desc.add_argument('desc', nargs='?', metavar='DESC-VALUE', help='security descriptor in base64')
+parser_desc.add_argument('--hex', action='store_true', help='specify the descriptor in hex format instead')
 
 
 def main():
@@ -194,6 +199,17 @@ def main():
                 sys.exit(0)
 
             parser_uac.print_usage()
+
+        ##########################################################################
+        #######                    DESC related Actions                     ######
+        ##########################################################################
+        elif args.command == 'desc':
+
+            if args.hex:
+                wconv.securitydescriptor.SecurityDescriptor.from_hex(args.desc)
+
+            else:
+                wconv.securitydescriptor.SecurityDescriptor.from_base64(args.desc)
 
         ##########################################################################
         #######                     No Command Selected                     ######
