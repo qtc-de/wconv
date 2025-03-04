@@ -189,7 +189,7 @@ class SecurityIdentifier:
             Binary length of the SID as int
         '''
         dash_count = self.binary[1]
-        return  dash_count * 4 + 8
+        return dash_count * 4 + 8
 
     def parse_binary(binary: bytes, check_length: bool) -> list[int]:
         '''

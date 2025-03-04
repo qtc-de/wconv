@@ -229,7 +229,6 @@ def main():
         ##########################################################################
         elif args.command == 'desc':
 
-
             if args.hex:
                 desc = wconv.securitydescriptor.SecurityDescriptor.from_hex(args.desc, args.type)
 

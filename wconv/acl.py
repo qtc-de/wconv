@@ -3,12 +3,8 @@
 from __future__ import annotations
 
 import struct
-import base64
-import binascii
 
-from wconv import WConvException
 from wconv.ace import Ace
-from wconv.sid import SecurityIdentifier
 
 
 class Acl:

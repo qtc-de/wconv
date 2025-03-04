@@ -85,7 +85,6 @@ class SecurityDescriptor:
         hex_string = binascii.hexlify(byte_data)
         return SecurityDescriptor.from_hex(hex_string, perm_type)
 
-
     def from_hex(hex_string: str, perm_type: str = 'file') -> SecurityDescriptor:
         '''
         Parses an SecurityDescriptor from a hex string.
@@ -121,7 +120,7 @@ class SecurityDescriptor:
             group_sid = SecurityIdentifier(byte_data[group_offset:], False)
 
         if sacl_offset != 0:
-            pass # TODO
+            pass  # TODO
 
         if dacl_offset != 0:
             dacl = Acl.from_bytes(byte_data[dacl_offset:], perm_type)

@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import re
-
 from wconv import WConvException
 from colorama import Fore, Style
 

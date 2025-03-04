@@ -739,11 +739,11 @@ class Ace:
             object_flags = struct.unpack('<I', byte_data[position:position + 4])[0]
             position += 4
 
-            if object_flags & 0x00000001: #  OBJECT_TYPE_PRESENT
+            if object_flags & 0x00000001:  # OBJECT_TYPE_PRESENT
                 object_type = str(UUID(bytes=byte_data[position:position + 16]))
                 position += 16
 
-            if object_flags & 0x00000002: #  INHERITED_OBJECT_TYPE_PRESENT
+            if object_flags & 0x00000002:  # INHERITED_OBJECT_TYPE_PRESENT
                 object_type_inherited = str(UUID(bytes=byte_data[position:position + 16]))
                 position += 16
 
