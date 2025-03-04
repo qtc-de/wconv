@@ -12,12 +12,30 @@ import wconv.securitydescriptor
 from wconv.helpers import print_yellow, print_blue
 
 
+typelist = [
+            'ad',
+            'file',
+            'directory',
+            'file_map',
+            'registry',
+            'service',
+            'service_control',
+            'process',
+            'thread',
+            'window_station',
+            'desktop',
+            'pipe',
+            'token'
+           ]
+
+
 parser = argparse.ArgumentParser(description=f'''wconv {wconv.version} - a command line utility to convert Windows specific
                                                 formats into human readable form. Currently, wconv supports convertion
                                                 of ACE, SDDL, SID and UAC values.''')
-
 subparsers = parser.add_subparsers(dest='command')
-typelist = ['ad', 'file', 'directory', 'file_map', 'registry', 'service', 'service_control', 'process', 'thread', 'window_station', 'desktop', 'pipe', 'token']
+
+parser.add_argument('--sid-mappings', type=argparse.FileType('r'), help='file containing SID mappings')
+parser.add_argument('--type-mappings', type=argparse.FileType('r'), help='file containing object type mappings')
 
 parser_ace = subparsers.add_parser('ace', help='convert integer ace')
 parser_ace.add_argument('ace', nargs='?', metavar='int', help='integer ace value')
@@ -49,7 +67,7 @@ parser_uac.add_argument('--mapping', action='store_true', help='display UserAcco
 parser_uac.add_argument('-t', '--toggle', metavar='flag', action='append', default=[], help='toogles specified flag on the UserAccountControl value')
 
 parser_desc = subparsers.add_parser('desc', help='convert security descriptor')
-parser_desc.add_argument('desc', nargs='?', metavar='b64', help='security descriptor in base64')
+parser_desc.add_argument('desc', metavar='b64', help='security descriptor in base64')
 parser_desc.add_argument('--hex', action='store_true', help='specify the descriptor in hex format instead')
 parser_desc.add_argument('--type', metavar='type', choices=typelist, default='ad', help='permission type (default: ad)')
 parser_desc.add_argument('--sid', metavar='sid', help='filter for a specific sid')
@@ -60,6 +78,9 @@ def main():
     Main method :)
     '''
     args = parser.parse_args()
+
+    wconv.helpers.sid_mapping_file = args.sid_mappings
+    wconv.helpers.type_mapping_file = args.type_mappings
 
     try:
 

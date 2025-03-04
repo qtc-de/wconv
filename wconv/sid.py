@@ -7,7 +7,7 @@ import base64
 import binascii
 
 from wconv import WConvException
-from wconv.helpers import print_yellow, print_blue
+from wconv.helpers import print_yellow, print_blue, sid_resolver
 
 WELL_KNOWN_SIDS = {
     "S-1-0-0": "NULL",
@@ -151,12 +151,12 @@ class SecurityIdentifier:
         Returns:
             String representation of the SID
         '''
-        result = f'{self.formatted_sid}'
+        sid_str = sid_resolver(self.formatted_sid)
 
         if self.well_known:
-            result += f' ({self.well_known})'
+            sid_str += f' ({self.well_known})'
 
-        return result
+        return sid_str
 
     def pretty_print(self) -> None:
         '''

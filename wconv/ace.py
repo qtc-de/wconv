@@ -8,7 +8,7 @@ from uuid import UUID
 
 from wconv import WConvException
 from wconv.sid import SecurityIdentifier
-from wconv.helpers import print_yellow, print_blue, get_int
+from wconv.helpers import print_yellow, print_blue, get_int, obj_type_resolver
 
 
 ACE_TYPES = {
@@ -529,11 +529,11 @@ class Ace:
 
         if self.object_type:
             print_blue(f'[+]{indent}Obj Type:\t', end='')
-            print_yellow(self.object_type)
+            print_yellow(obj_type_resolver(self.object_type))
 
         if self.inherited_object_type:
             print_blue(f'[+]{indent}IObj Type:\t', end='')
-            print_yellow(self.inherited_object_type)
+            print_yellow(obj_type_resolver(self.inherited_object_type))
 
         if self.permissions:
 
