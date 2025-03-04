@@ -13,7 +13,7 @@ from wconv.sid import SecurityIdentifier
 
 class Acl:
     '''
-    Class for a ACL
+    Class for an ACL.
     '''
 
     def __init__(self, version: int, ace_count: int, aces: list[Ace]) -> None:
@@ -23,12 +23,12 @@ class Acl:
         self.ace_count = ace_count
         self.aces = aces
 
-    def from_bytes(byte_data: bytes, perm_type: str = 'file') -> ACL:
+    def from_bytes(byte_data: bytes, perm_type: str = 'file') -> Acl:
         '''
-        Pars ean ACL from binary data
+        Parse an Acl from binary data.
 
         Parameters:
-            byte_data       byte data containing the ACL
+            byte_data       byte data containing the Acl
             perm_type       Object type the descriptor applies to (file, service, ...)
 
         Returns:

@@ -8,6 +8,7 @@ import binascii
 
 from wconv import WConvException
 from wconv.acl import Acl
+from wconv.ace import Ace
 from wconv.sid import SecurityIdentifier
 from wconv.helpers import print_yellow, print_blue
 
@@ -79,7 +80,7 @@ class SecurityDescriptor:
             byte_data = base64.b64decode(b64_string)
 
         except binascii.Error:
-            raise WConvException(f"from_hex(... - No hex content '{hex_string}'.")
+            raise WConvException(f"from_hex(... - No base64 content '{b64_string}'.")
 
         hex_string = binascii.hexlify(byte_data)
         return SecurityDescriptor.from_hex(hex_string, perm_type)
