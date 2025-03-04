@@ -151,10 +151,14 @@ class SecurityIdentifier:
         Returns:
             String representation of the SID
         '''
-        sid_str = sid_resolver(self.formatted_sid)
+        sid_str = self.formatted_sid
+        resolved_sid = sid_resolver(sid_str)
 
         if self.well_known:
             sid_str += f' ({self.well_known})'
+
+        elif resolved_sid != sid_str:
+            sid_str += f' ({resolved_sid})'
 
         return sid_str
 
