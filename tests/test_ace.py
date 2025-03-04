@@ -22,7 +22,7 @@ from_string_tests = [
 @pytest.mark.parametrize(from_string_format, from_string_tests)
 def test_ace_from_string(ace_string, perm_type, ace_type, trustee, numeric, flags, perms):
     ace = a.Ace.from_string(ace_string, perm_type)
-    assert ace.ace_type == ace_type
+    assert a.ACE_TYPES[ace.ace_type] == ace_type
     assert ace.trustee == trustee
     assert ace.numeric == numeric
     assert ace.ace_flags == flags
