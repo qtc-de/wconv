@@ -40,8 +40,8 @@ def default_sid_resolver(sid: str) -> str:
     for line in sid_mapping_file.readlines():
 
         try:
-            sid, name = line.split(':', 1)
-            sid_mappings[sid] = name.strip()
+            sid_key, name = line.split(':', 1)
+            sid_mappings[sid_key] = name.strip()
 
         except ValueError:
             pass
@@ -71,8 +71,8 @@ def default_obj_type_resolver(guid: str) -> str:
     for line in type_mapping_file.readlines():
 
         try:
-            guid, name = line.split(':', 1)
-            obj_type_mappings[guid] = name.strip()
+            guid_key, name = line.split(':', 1)
+            obj_type_mappings[guid_key] = name.strip()
 
         except ValueError:
             pass
