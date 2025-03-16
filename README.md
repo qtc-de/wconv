@@ -3,7 +3,7 @@
 ----
 
 *wconv* is a simple command line utility that can be used to parse and convert
-Windows related formats into human readable forms. Additionally, it supports
+Windows related formats into human readable form. Additionally, it supports
 simple modifications on Windows related formats.
 
 ![](https://github.com/qtc-de/wconv/workflows/master%20Python%20CI/badge.svg?branch=master)
@@ -38,6 +38,8 @@ simple modifications on Windows related formats.
     + [Parse UAC](#parse-uac)
     + [Toggle Flag](#toggle-flag)
     + [Display Mappings](#display-mappings)
+  * [DESC Module](#desc-module)
+    + [Parse SecurityDescriptor](#parse-securitydescriptor)
 - [Library Information](#library-information)
 - [Resources](#resources)
 
@@ -85,21 +87,38 @@ operations are demonstrated.
 
 ```console
 $ wconv --help
-usage: wconv [-h] {ace,sddl,sid,uac} ...
+usage: wconv [-h] [--sid-mappings path] [--type-mappings path] {ace,sddl,sid,uac,desc} ...
 
-wconv is a command line utility that can be used to parse and convert certain Windows related representations into human readable formats. Currently the tool supports parsing and convetion of ACE, SDDL, SID and
-UAC values.
+wconv v2.0.0 - a command line utility to convert Windows specific formats into human readable form. Currently, wconv supports convertion of ACE, SDDL, SID, UAC and SecurityDescriptor
+values.
 
 positional arguments:
-  {ace,sddl,sid,uac}
-    ace               convert integer ace
-    sddl              convert sddl string into readable permissions
-    sid               convert Windows SecurityIdentifier formats
-    uac               convert integer UserAccountControl
+  {ace,sddl,sid,uac,desc}
+    ace                 convert integer ace
+    sddl                convert sddl string into readable permissions
+    sid                 convert Windows SecurityIdentifier formats
+    uac                 convert integer UserAccountControl
+    desc                convert security descriptor
 
-optional arguments:
-  -h, --help          show this help message and exit
+options:
+  -h, --help            show this help message and exit
+  --sid-mappings path   file containing SID mappings
+  --type-mappings path  file containing object type mappings
 ```
+
+Aside from the module specific options and flags, *wconv* supports two global options that can be used
+to specify additional information that is accessible from all modules. Using the `--sid-mappings` option,
+you can specify the path to a textfile that contains SID mappings in the following format:
+
+```
+<SID>: <NAME>
+<SID>: <NAME>
+...
+```
+
+The same can be used for *Object Types* using the `--type-mappings` option. Whenever *wconv* attempts
+to print a *SID* or *Object Type*, it checks whether a mapping to a human readable name exists and
+appends this data if present.
 
 
 #### ACE Module
@@ -312,7 +331,7 @@ $ wconv ace --trustees
 
 ----
 
-The *SDDL module* supports operations to convert *SDDL strings* into human readable forms.
+The *SDDL module* supports operations to convert *SDDL strings* into human readable form.
 
 ```console
 $ wconv sddl --help
@@ -578,6 +597,89 @@ $ wconv uac --mapping
 [+] 0x00800000 - PASSWORD_EXPIRED
 [+] 0x01000000 - TRUSTED_TO_AUTH_FOR_DELEGATION
 [+] 0x04000000 - PARTIAL_SECRETS_ACCOUNT
+```
+
+
+### DESC Module
+
+----
+
+The *DESC module* supports operations to convert *SecurityDescriptors* into human readable form.
+
+```console
+$ wconv desc -h
+usage: wconv desc [-h] [--hex] [--type type] [--sid sid] [--adminsd] b64
+
+positional arguments:
+  b64          security descriptor in base64
+
+options:
+  -h, --help   show this help message and exit
+  --hex        specify the descriptor in hex format instead
+  --type type  permission type (default: ad)
+  --sid sid    filter for a specific sid
+  --adminsd    filter out inherited ACEs
+```
+
+##### Parse SecurityDescriptor
+
+Parses the given base64 formatted SecurityDescriptor. This is the default action and does not require
+additional flags. When specifying the `--hex` flag, the SecurityDescriptor is expected in hex format
+instead.
+
+```console
+$ wconv desc AQAEjKQgAADAIAAAAAAAA...
+[+] Owner:	S-1-5-21-1004336348-1177238915-682003330-512 (DOMAIN_ADMINS)
+[+] Group:	S-1-5-21-1004336348-1177238915-682003330-513 (DOMAIN_USERS)
+[+] Ace Count:	154
+[+] ACE list:
+[+]
+[+] Trustee:	S-1-5-21-1004336348-1177238915-682003330-519 (ENTERPRISE_ADMINS)
+[+] Numeric:	0x000f01ff
+[+] ACE Flags:
+[+] 		+ CONTAINER_INHERIT
+[+] 		+ INHERITED
+[+] Permissions:
+[+] 		+ DELETE
+[+] 		+ READ_CONTROL
+[+] 		+ WRITE_DACL
+[+] 		+ WRITE_OWNER
+[+] 		+ DS_CREATE_CHILD
+[+] 		+ DS_DELETE_CHILD
+[+] 		+ ACTRL_DS_LIST
+[+] 		+ DS_SELF
+[+] 		+ DS_READ_PROP
+[+] 		+ DS_WRITE_PROP
+[+] 		+ DS_DELETE_TREE
+[+] 		+ DS_LIST_OBJECT
+[+] 		+ DS_CONTROL_ACCESS
+[+]
+[+] Trustee:	S-1-5-32-554 (ALIAS_PREW2KCOMPACC)
+[+] Numeric:	0x00000004
+[+] ACE Flags:
+[+] 		+ CONTAINER_INHERIT
+[+] 		+ INHERITED
+[+] Permissions:
+[+] 		+ ACTRL_DS_LIST
+[+]
+[+] Trustee:	S-1-5-32-544 (BUILTIN_ADMINISTRATORS)
+[+] Numeric:	0x000f01bd
+[+] ACE Flags:
+[+] 		+ CONTAINER_INHERIT
+[+] 		+ INHERITED
+[+] Permissions:
+[+] 		+ DELETE
+[+] 		+ READ_CONTROL
+[+] 		+ WRITE_DACL
+[+] 		+ WRITE_OWNER
+[+] 		+ DS_CREATE_CHILD
+[+] 		+ ACTRL_DS_LIST
+[+] 		+ DS_SELF
+[+] 		+ DS_READ_PROP
+[+] 		+ DS_WRITE_PROP
+[+] 		+ DS_LIST_OBJECT
+[+] 		+ DS_CONTROL_ACCESS
+...
 ```
 
 
