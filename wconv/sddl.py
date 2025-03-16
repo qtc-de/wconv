@@ -53,14 +53,13 @@ class Sddl:
         self.acl_flags = acl_flags
         self.ace_list = ace_list
 
-    def pretty_print(self, indent: str = ' ', verbose: bool = False) -> None:
+    def pretty_print(self, indent: str = ' ') -> None:
         '''
         Prints the Sddl and the contained Aces in a formatted and colored format. Not
         ideal for a library, however, currently we can live with it.
 
         Parameters:
             indent          Spaces after the '[+]' prefix
-            verbose         Decides if ACE flags are printed
 
         Returns:
             None
@@ -74,18 +73,17 @@ class Sddl:
         print_blue(f'[+]{indent}Group:\t', end='')
         print_yellow(self.group)
 
-        if verbose:
-            print_blue(f'[+]{indent}ACL Flags:')
+        print_blue(f'[+]{indent}ACL Flags:')
 
-            for flag in self.acl_flags:
-                print_blue('[+]', end='')
-                print_yellow(f'{indent}\t\t+ {flag}')
+        for flag in self.acl_flags:
+            print_blue('[+]', end='')
+            print_yellow(f'{indent}\t\t+ {flag}')
 
         print_blue(f'[+]{indent}ACE List:')
         print_blue('[+] ==================================')
 
         for ace in self.ace_list:
-            ace.pretty_print(verbose=verbose, indent=indent + ' '*4)
+            ace.pretty_print(indent=indent + ' '*4)
             print_blue('[+] ==================================')
 
     def get_owner(sddl_string: str) -> str:

@@ -47,14 +47,12 @@ parser_ace.add_argument('--from-string', dest='string', action='store_true', hel
 parser_ace.add_argument('--type', metavar='type', choices=typelist, default='file', help='permission type (default: file)')
 parser_ace.add_argument('-t', '--toggle', metavar='perm', action='append', default=[], help='toogles specified permission on the ace value')
 parser_ace.add_argument('--trustees', action='store_true', help='display available trustees')
-parser_ace.add_argument('-v', '--verbose', action='store_true', help='verbose output')
 
 parser_sddl = subparsers.add_parser('sddl', help='convert sddl string into readable permissions')
 parser_sddl.add_argument('sddl', nargs='?', metavar='str', help='sddl string')
 parser_sddl.add_argument('--add-everyone', dest='everyone', action='store_true', help='add full permissions for everyone')
 parser_sddl.add_argument('--add-anonymous', dest='anonymous', action='store_true', help='add full permissions for anonymous')
 parser_sddl.add_argument('-t', '--type', metavar='type', choices=typelist, default='file', help='permission type (default: file)')
-parser_sddl.add_argument('-v', '--verbose', action='store_true', help='verbose output')
 
 parser_sid = subparsers.add_parser('sid', help='convert Windows SecurityIdentifier formats')
 parser_sid.add_argument('sid', nargs='?', metavar='b64', help='sid value (default format: base64)')
@@ -141,7 +139,7 @@ def main():
                 else:
                     ace = wconv.ace.Ace.from_int(args.ace, args.type)
 
-                ace.pretty_print(verbose=args.verbose)
+                ace.pretty_print()
                 sys.exit(0)
 
             parser_ace.print_usage()
@@ -166,7 +164,7 @@ def main():
                     sys.exit(0)
 
                 sddl = wconv.sddl.Sddl.from_string(args.sddl, args.type)
-                sddl.pretty_print(verbose=args.verbose)
+                sddl.pretty_print()
                 sys.exit(0)
 
             parser_sddl.print_usage()
