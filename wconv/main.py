@@ -83,7 +83,7 @@ def main():
         wconv.sid.KNOWN_SIDS |= file_to_dict(args.sid_mappings.name)
 
     if args.type_mappings:
-        wconv.objecttype.OBJECT_TYPES |= file_to_dict(args.type_mappings.name)
+         wconv.objecttype.ObjectType.add_types(file_to_dict(args.type_mappings.name))
 
     try:
 

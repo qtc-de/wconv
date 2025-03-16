@@ -1854,3 +1854,21 @@ class ObjectType:
             print_magenta(f' ({self.name})', end='')
 
         print(end=end)
+
+    def add_types(type_dict: dict[str, str]) -> None:
+        '''
+        Adds additional types to the OBJECT_TYPES dictionary.
+
+        Paramaters:
+            type_dict       dictionary containing types in string format
+
+        Returns:
+            None
+        '''
+        for key, value in type_dict.items():
+
+            try:
+                OBJECT_TYPES[uuid.UUID(key)] = value
+
+            except:
+                pass
