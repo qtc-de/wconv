@@ -32,7 +32,7 @@ typelist = [
 
 parser = argparse.ArgumentParser(description=f'''wconv {wconv.version} - a command line utility to convert Windows specific
                                                 formats into human readable form. Currently, wconv supports convertion
-                                                of ACE, SDDL, SID and UAC values.''')
+                                                of ACE, SDDL, SID, UAC and SecurityDescriptor values.''')
 subparsers = parser.add_subparsers(dest='command')
 
 parser.add_argument('--sid-mappings', metavar='path', type=argparse.FileType('r'), help='file containing SID mappings')
