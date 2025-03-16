@@ -96,7 +96,7 @@ class SecurityDescriptor:
             byte_data = base64.b64decode(b64_string)
 
         except binascii.Error:
-            raise WConvException(f"from_hex(... - No base64 content '{b64_string}'.")
+            raise WConvException(f"from_base64(... - No base64 content '{b64_string}'.")
 
         hex_string = binascii.hexlify(byte_data)
         return SecurityDescriptor.from_hex(hex_string, perm_type)
