@@ -496,14 +496,13 @@ class Ace:
 
         return result[:-1]
 
-    def pretty_print(self, indent: str = ' ', verbose: bool = False) -> None:
+    def pretty_print(self, indent: str = ' ') -> None:
         '''
         Prints some formatted and colored output that represents the ACE. Probably not really
         ideal to be placed inside a library, but for now we can live with that.
 
         Parameters:
             indent          Spaces after the '[+]' prefix
-            verbose         Decides if ACE flags are printed
 
         Returns:
             None
@@ -525,13 +524,13 @@ class Ace:
             print_blue(f'[+]{indent}Numeric:\t', end='')
             print_yellow('0x{:08x}'.format(self.numeric))
 
-        if verbose:
-            if self.ace_flags:
+        if self.ace_flags:
 
-                print_blue(f'[+]{indent}ACE Flags:')
-                for flag in self.ace_flags:
-                    print_blue('[+]', end='')
-                    print_yellow(f'{indent}\t\t+ {flag}')
+            print_blue(f'[+]{indent}ACE Flags:')
+
+            for flag in self.ace_flags:
+                print_blue('[+]', end='')
+                print_yellow(f'{indent}\t\t+ {flag}')
 
         if self.object_type:
             print_blue(f'[+]{indent}Obj Type:\t', end='')
