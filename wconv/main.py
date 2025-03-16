@@ -35,8 +35,8 @@ parser = argparse.ArgumentParser(description=f'''wconv {wconv.version} - a comma
                                                 of ACE, SDDL, SID and UAC values.''')
 subparsers = parser.add_subparsers(dest='command')
 
-parser.add_argument('--sid-mappings', type=argparse.FileType('r'), help='file containing SID mappings')
-parser.add_argument('--type-mappings', type=argparse.FileType('r'), help='file containing object type mappings')
+parser.add_argument('--sid-mappings', metavar='path', type=argparse.FileType('r'), help='file containing SID mappings')
+parser.add_argument('--type-mappings', metavar='path', type=argparse.FileType('r'), help='file containing object type mappings')
 
 parser_ace = subparsers.add_parser('ace', help='convert integer ace')
 parser_ace.add_argument('ace', nargs='?', metavar='int', help='integer ace value')
