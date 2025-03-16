@@ -7,9 +7,10 @@ import wconv
 import wconv.uac
 import wconv.sid
 import wconv.sddl
+import wconv.objecttype
 import wconv.securitydescriptor
 
-from wconv.helpers import print_yellow, print_blue
+from wconv.helpers import print_yellow, print_blue, file_to_dict
 
 
 typelist = [
@@ -79,8 +80,11 @@ def main():
     '''
     args = parser.parse_args()
 
-    wconv.helpers.sid_mapping_file = args.sid_mappings
-    wconv.helpers.type_mapping_file = args.type_mappings
+    if args.sid_mappings:
+        wconv.sid.KNOWN_SIDS += file_to_dict(args.sid_mappings.name)
+
+    if args.type_mappings:
+        wconv.objecttype.OBJECT_TYPES += file_to_dict(args.type_mappings.name)
 
     try:
 

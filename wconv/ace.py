@@ -7,8 +7,9 @@ import struct
 from uuid import UUID
 
 from wconv import WConvException
+from wconv.objecttype import ObjectType
 from wconv.sid import SecurityIdentifier
-from wconv.helpers import print_yellow, print_blue, get_int, obj_type_resolver
+from wconv.helpers import print_yellow, print_blue, print_magenta, get_int
 
 
 ACE_TYPES = {
@@ -463,8 +464,8 @@ class Ace:
         self.ace_type = ace_type
         self.ace_flags = ace_flags
         self.permissions = permissions
-        self.object_type = object_type
-        self.inherited_object_type = inherited_object_type
+        self.object_type = ObjectType(object_type)
+        self.inherited_object_type = ObjectType(inherited_object_type)
         self.trustee = trustee
         self.numeric = numeric
 
@@ -513,7 +514,12 @@ class Ace:
 
         if self.trustee:
             print_blue(f'[+]{indent}Trustee:\t', end='')
-            print_yellow(self.trustee)
+
+            if type(self.trustee) is SecurityIdentifier:
+                self.trustee.pretty_print()
+
+            else:
+                print_yellow(self.trustee)
 
         if self.numeric:
             print_blue(f'[+]{indent}Numeric:\t', end='')
@@ -529,11 +535,11 @@ class Ace:
 
         if self.object_type:
             print_blue(f'[+]{indent}Obj Type:\t', end='')
-            print_yellow(obj_type_resolver(self.object_type))
+            self.object_type.pretty_print()
 
         if self.inherited_object_type:
             print_blue(f'[+]{indent}IObj Type:\t', end='')
-            print_yellow(obj_type_resolver(self.inherited_object_type))
+            self.inherited_object_type.pretty_print()
 
         if self.permissions:
 

@@ -15,7 +15,7 @@ from_base64_tests = [
 def test_sid_from_base64(base64, sid_value, trustee):
     sid = s.SecurityIdentifier.from_b64(base64)
     assert sid.formatted_sid == sid_value
-    assert sid.well_known == trustee
+    assert sid.name == trustee
 
 
 to_base64_format = 'sid_value, base64'
@@ -45,4 +45,4 @@ from_hex_tests = [
 def test_sid_from_hex(hex_string, sid_value, trustee):
     sid = s.SecurityIdentifier.from_hex(hex_string)
     assert sid.formatted_sid == sid_value
-    assert sid.well_known == trustee
+    assert sid.name == trustee

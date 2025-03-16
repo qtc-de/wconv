@@ -1,5 +1,5 @@
 name = 'wconv'
-version = 'v1.1.0'
+version = 'v2.0.0'
 
 
 class WConvException(Exception):

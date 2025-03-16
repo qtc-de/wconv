@@ -7,7 +7,8 @@ import base64
 import binascii
 
 from wconv import WConvException
-from wconv.helpers import print_yellow, print_blue, sid_resolver
+from wconv.helpers import print_yellow, print_blue
+
 
 WELL_KNOWN_SIDS = {
     "S-1-0-0": "NULL",
@@ -119,6 +120,9 @@ WELL_KNOWN_SIDS = {
 }
 
 
+KNOWN_SIDS = {}
+
+
 class SecurityIdentifier:
     '''
     Represents a Windows Security Identifier.
@@ -136,14 +140,15 @@ class SecurityIdentifier:
             SecurityIdentifier
         '''
         self.raw_sid = binary
+
         self.parsed_sid = SecurityIdentifier.parse_binary(binary, check_length)
         self.formatted_sid = SecurityIdentifier.format_sid(self.parsed_sid)
-        self.well_known = SecurityIdentifier.get_well_known(self.formatted_sid)
+
+        self.name = SecurityIdentifier.get_well_known(self.formatted_sid) or KNOWN_SIDS.get(self.formatted_sid)
 
     def __str__(self) -> str:
         '''
-        Returns a simple representation of the SecurityIdentifier object. Useful for
-        debugging purposes.
+        Returns the SecurityIdentifier in string format.
 
         Parameters:
             None
@@ -151,20 +156,12 @@ class SecurityIdentifier:
         Returns:
             String representation of the SID
         '''
-        sid_str = self.formatted_sid
-        resolved_sid = sid_resolver(sid_str)
+        return self.formatted_sid
 
-        if self.well_known:
-            sid_str += f' ({self.well_known})'
-
-        elif resolved_sid != sid_str:
-            sid_str += f' ({resolved_sid})'
-
-        return sid_str
-
-    def pretty_print(self) -> None:
+    def pretty_print(self, end: str = '\ņ') -> None:
         '''
         Prints a colored and formatted output of the SecurityIdentifier object.
+        This includes the resolved human readable name, if present.
 
         Parameters:
             None
@@ -172,15 +169,10 @@ class SecurityIdentifier:
         Returns:
             None
         '''
-        print_blue('[+] SID: ', end='')
         print_yellow(self.formatted_sid, end='')
 
-        if self.well_known:
-            print_blue(' (', end='')
-            print_yellow(self.well_known, end='')
-            print_blue(')', end='')
-
-        print()
+        if self.name:
+            print_magenta(f' ({self.name})', end=end)
 
     def get_binary_length(self) -> int:
         '''
@@ -194,6 +186,25 @@ class SecurityIdentifier:
         '''
         dash_count = self.binary[1]
         return dash_count * 4 + 8
+
+    def get_well_known(sid_string: str) -> str:
+        '''
+        Get the well known name for the specified SID string. Notice that the
+        WELL_KNOWN_SIDS dictionary contains regex like expression. A simple
+        dictionary lookup is therefore not sufficient.
+
+        Paramaters:
+            sid_string      SID string to look for
+
+        Returns:
+            Well known name of the SID or None
+        '''
+        for key, value in WELL_KNOWN_SIDS.items():
+
+            if re.match(f'^{key}$', sid_string):
+                return value
+
+        return None
 
     def parse_binary(binary: bytes, check_length: bool) -> list[int]:
         '''
@@ -247,23 +258,6 @@ class SecurityIdentifier:
             result += '-'
 
         return result[0:-1]
-
-    def get_well_known(sid_string: str) -> str:
-        '''
-        Get the well known name for the specified SID string.
-
-        Paramaters:
-            sid_string      SID string to look for
-
-        Returns:
-            Well known name of the SID or None
-        '''
-        for key, value in WELL_KNOWN_SIDS.items():
-
-            if re.match(f'^{key}$', sid_string):
-                return value
-
-        return None
 
     def to_b64(self) -> str:
         '''
