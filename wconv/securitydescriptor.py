@@ -37,10 +37,10 @@ class SecurityDescriptor:
             None
         '''
         print_blue(f'[+]{indent}Owner:\t', end='')
-        print_yellow(self.owner)
+        self.owner.pretty_print()
 
         print_blue(f'[+]{indent}Group:\t', end='')
-        print_yellow(self.group)
+        self.group.pretty_print()
 
         print_blue(f'[+]{indent}Ace Count:\t', end='')
         print_yellow(self.dacl.ace_count)
