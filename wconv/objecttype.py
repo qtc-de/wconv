@@ -1809,17 +1809,17 @@ class ObjectType:
     Represents an object type.
     '''
 
-    def __init__(self, uuid: bytes | str | uuid.UUID) -> None:
+    def __init__(self, data: bytes | str | uuid.UUID) -> None:
         '''
         '''
-        if type(uuid) is bytes:
-            self.uuid = uuid.UUID(bytes=uuid)
+        if type(data) is bytes:
+            self.uuid = uuid.UUID(bytes_le=data)
 
-        elif type(uuid) is str:
-            self.uuid = uuid.UUID(uuid)
+        elif type(data) is str:
+            self.uuid = uuid.UUID(data)
 
-        elif type(uuid) is uuid.UUID:
-            self.uuid = uuid
+        elif type(data) is uuid.UUID:
+            self.uuid = data
 
         else:
             raise ValueError
