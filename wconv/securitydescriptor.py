@@ -50,7 +50,7 @@ class SecurityDescriptor:
             print_blue('[+]')
             ace.pretty_print()
 
-    def filter_aces(self, sid: str) -> list[Ace]:
+    def filter_sid(self, sid: str) -> list[Ace]:
         '''
         Filter ACE objects by a specified SID.
 
@@ -63,6 +63,22 @@ class SecurityDescriptor:
         for ace in self.dacl.aces:
             if sid in str(ace.trustee):
 
+                yield ace
+
+    def filter_inherited(self) -> list[Ace]:
+        '''
+        Filter out inherited ACEs. This is usefule for AdminSDHolder
+        type of objects, as inherited ACEs do not apply here.
+
+        Parameters:
+            None
+
+        Returns:
+            filtered ACE list
+        '''
+        for ace in self.dacl.aces:
+
+            if 'INHERITED' not in ace.ace_flags:
                 yield ace
 
     def from_base64(b64_string: str, perm_type: str = 'file') -> SecurityDescriptor:

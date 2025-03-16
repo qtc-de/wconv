@@ -70,6 +70,7 @@ parser_desc.add_argument('desc', metavar='b64', help='security descriptor in bas
 parser_desc.add_argument('--hex', action='store_true', help='specify the descriptor in hex format instead')
 parser_desc.add_argument('--type', metavar='type', choices=typelist, default='ad', help='permission type (default: ad)')
 parser_desc.add_argument('--sid', metavar='sid', help='filter for a specific sid')
+parser_desc.add_argument('--adminsd', action='store_true', help='filter out inherited ACEs')
 
 
 def main():
@@ -79,10 +80,10 @@ def main():
     args = parser.parse_args()
 
     if args.sid_mappings:
-        wconv.sid.KNOWN_SIDS += file_to_dict(args.sid_mappings.name)
+        wconv.sid.KNOWN_SIDS |= file_to_dict(args.sid_mappings.name)
 
     if args.type_mappings:
-        wconv.objecttype.OBJECT_TYPES += file_to_dict(args.type_mappings.name)
+        wconv.objecttype.OBJECT_TYPES |= file_to_dict(args.type_mappings.name)
 
     try:
 
@@ -238,7 +239,13 @@ def main():
                 desc = wconv.securitydescriptor.SecurityDescriptor.from_base64(args.desc, args.type)
 
             if args.sid:
-                for ace in desc.filter_aces(args.sid):
+
+                for ace in desc.filter_sid(args.sid):
+                    ace.pretty_print()
+                    print_blue('[+]')
+
+            if args.adminsd:
+                for ace in desc.filter_inherited():
                     ace.pretty_print()
                     print_blue('[+]')
 

@@ -20,7 +20,7 @@ def file_to_dict(path: str, delim: str = ':') -> dict:
         dictionary created from file contents
     '''
     dic = dict()
-    path = pathlib.Path(path)
+    path = Path(path)
 
     if not path.is_file():
         return dic
@@ -30,7 +30,7 @@ def file_to_dict(path: str, delim: str = ':') -> dict:
 
         try:
             key, value = line.split(delim, 1)
-            dic[strip(key)] = strip(value)
+            dic[key.strip()] = value.strip()
 
         except:
             pass
