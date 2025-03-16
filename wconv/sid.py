@@ -7,7 +7,7 @@ import base64
 import binascii
 
 from wconv import WConvException
-from wconv.helpers import print_yellow, print_blue
+from wconv.helpers import print_yellow, print_blue, print_magenta
 
 
 WELL_KNOWN_SIDS = {
@@ -158,7 +158,7 @@ class SecurityIdentifier:
         '''
         return self.formatted_sid
 
-    def pretty_print(self, end: str = '\ņ') -> None:
+    def pretty_print(self, end: str = '\n') -> None:
         '''
         Prints a colored and formatted output of the SecurityIdentifier object.
         This includes the resolved human readable name, if present.
@@ -172,7 +172,9 @@ class SecurityIdentifier:
         print_yellow(self.formatted_sid, end='')
 
         if self.name:
-            print_magenta(f' ({self.name})', end=end)
+            print_magenta(f' ({self.name})', end='')
+
+        print(end=end)
 
     def get_binary_length(self) -> int:
         '''

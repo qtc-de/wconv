@@ -464,8 +464,8 @@ class Ace:
         self.ace_type = ace_type
         self.ace_flags = ace_flags
         self.permissions = permissions
-        self.object_type = ObjectType(object_type)
-        self.inherited_object_type = ObjectType(inherited_object_type)
+        self.object_type = object_type
+        self.inherited_object_type = inherited_object_type
         self.trustee = trustee
         self.numeric = numeric
 
@@ -679,6 +679,12 @@ class Ace:
         object_type = ace_split[3]
         inherited_object_type = ace_split[4]
 
+        if object_type:
+            object_type = ObjectType(object_type)
+
+        if inherited_object_type:
+            inherited_object_type = ObjectType(inherited_object_type)
+
         trustee = ace_split[5]
         if trustee in TRUSTEES:
             trustee = TRUSTEES[trustee]
@@ -746,11 +752,11 @@ class Ace:
             position += 4
 
             if object_flags & 0x00000001:  # OBJECT_TYPE_PRESENT
-                object_type = str(UUID(bytes_le=byte_data[position:position + 16]))
+                object_type = ObjectType(byte_data[position:position + 16])
                 position += 16
 
             if object_flags & 0x00000002:  # INHERITED_OBJECT_TYPE_PRESENT
-                object_type_inherited = str(UUID(bytes_le=byte_data[position:position + 16]))
+                object_type_inherited = ObjectType(byte_data[position:position + 16])
                 position += 16
 
         ace_perms = struct.unpack('<I', byte_data[4:8])[0]

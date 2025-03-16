@@ -1848,7 +1848,9 @@ class ObjectType:
         Returns:
             None
         '''
-        print_yellow(self)
+        print_yellow(self, end='')
 
         if self.name:
-            print_magenta(f' ({self.name})', end=end)
+            print_magenta(f' ({self.name})', end='')
+
+        print(end=end)
