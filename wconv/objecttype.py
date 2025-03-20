@@ -23,6 +23,13 @@ from wconv.helpers import print_yellow, print_magenta
 # Most object types are common between different directories. Some object types get added
 # when installing specific extensions (e.g. LAPS or Exchange). Administrators could of course
 # also create custom entries.
+#
+# Additionally to LDAP property object types, we also include the Active Directory extended
+# rights here. These can be obtained using the following LDAP query:
+#
+#  > ldapsearch -H ldap://DC.lab.local -b CN=Extended-Rights,CN=Configuration,DC=lab,DC=local \
+#    -D CN=tony,CN=Users,DC=lab,DC=local "(objectClass=controlAccessRight)" cn RightsGuid -W -E pr=999/noprompt \
+#    -o 'ldif_wrap=no' > rights.txt
 
 OBJECT_TYPES = {
                  uuid.UUID('0003508e-9c42-4a76-a8f4-38bf64bab0de'): 'ms-WMI-Parm2',
