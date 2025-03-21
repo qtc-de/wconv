@@ -45,14 +45,14 @@ parser_ace.add_argument('--ace-types', dest='types', action='store_true', help='
 parser_ace.add_argument('--ace-permissions', dest='permissions', action='store_true', help='show permission definitions for requested type')
 parser_ace.add_argument('--from-string', dest='string', action='store_true', help='interpret ace value als ace-string (sddl format)')
 parser_ace.add_argument('--type', metavar='type', choices=typelist, default='file', help='permission type (default: file)')
-parser_ace.add_argument('-t', '--toggle', metavar='perm', action='append', default=[], help='toogles specified permission on the ace value')
+parser_ace.add_argument('--toggle', metavar='perm', action='append', default=[], help='toogles specified permission on the ace value')
 parser_ace.add_argument('--trustees', action='store_true', help='display available trustees')
 
 parser_sddl = subparsers.add_parser('sddl', help='convert sddl string into readable permissions')
 parser_sddl.add_argument('sddl', nargs='?', metavar='str', help='sddl string')
 parser_sddl.add_argument('--add-everyone', dest='everyone', action='store_true', help='add full permissions for everyone')
 parser_sddl.add_argument('--add-anonymous', dest='anonymous', action='store_true', help='add full permissions for anonymous')
-parser_sddl.add_argument('-t', '--type', metavar='type', choices=typelist, default='file', help='permission type (default: file)')
+parser_sddl.add_argument('--type', metavar='type', choices=typelist, default='file', help='permission type (default: file)')
 
 parser_sid = subparsers.add_parser('sid', help='convert Windows SecurityIdentifier formats')
 parser_sid.add_argument('sid', nargs='?', metavar='b64', help='sid value (default format: base64)')
@@ -63,7 +63,7 @@ parser_sid.add_argument('--well-known', dest='known', action='store_true', help=
 parser_uac = subparsers.add_parser('uac', help='convert integer UserAccountControl')
 parser_uac.add_argument('uac', nargs='?', metavar='int', help='binary user account control value')
 parser_uac.add_argument('--mapping', action='store_true', help='display UserAccountControl mappings (flags)')
-parser_uac.add_argument('-t', '--toggle', metavar='flag', action='append', default=[], help='toogles specified flag on the UserAccountControl value')
+parser_uac.add_argument('--toggle', metavar='flag', action='append', default=[], help='toogles specified flag on the UserAccountControl value')
 
 parser_desc = subparsers.add_parser('desc', help='convert security descriptor')
 parser_desc.add_argument('desc', metavar='b64', help='security descriptor in base64')
