@@ -691,6 +691,37 @@ $ wconv desc AQAEjKQgAADAIAAAAAAAA...
 ...
 ```
 
+##### AdminSDHolder Filtering
+
+ACE inheritance is deactivated for Active Directory objects protected by AdminSDHolder.
+To filter inherited permissions, you can use the `--adminsd` flag.
+
+```console
+$ wconv desc AQAEjKQgAADAIAAAAAAAA... --adminsd
+[+] ACE Type:	ACCESS_ALLOWED_OBJECT
+[+] Trustee:	S-1-5-32-560 (WINDOWS_AUTHORIZATION_ACCESS_GROUP)
+[+] Numeric:	0x00000010
+[+] Obj Type:	46a9b11d-60ae-405a-b7e8-ff8a58d456d2 (Token-Groups-Global-And-Universal)
+[+] Permissions:
+[+] 		+ DS_READ_PROP
+[+]
+[+] ACE Type:	ACCESS_ALLOWED_OBJECT
+[+] Trustee:	S-1-5-32-561 (TERMINAL_SERVER_LICENSE_SERVERS)
+[+] Numeric:	0x00000030
+[+] Obj Type:	6db69a1c-9422-11d1-aebd-0000f80367c1 (Terminal-Server)
+[+] Permissions:
+[+] 		+ DS_READ_PROP
+[+] 		+ DS_WRITE_PROP
+[+]
+[+] ACE Type:	ACCESS_ALLOWED_OBJECT
+[+] Trustee:	S-1-5-32-561 (TERMINAL_SERVER_LICENSE_SERVERS)
+[+] Numeric:	0x00000030
+[+] Obj Type:	5805bc62-bdc9-4428-a5e2-856a0f4c185e (Terminal-Server-License-Server)
+[+] Permissions:
+[+] 		+ DS_READ_PROP
+[+] 		+ DS_WRITE_PROP
+```
+
 
 ### Library Information
 
