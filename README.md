@@ -3,11 +3,15 @@
 ----
 
 *wconv* is a simple command line utility that can be used to parse and convert
-Windows related formats into human readable forms. Additionally, it supports
+Windows related formats into human readable form. Additionally, it supports
 simple modifications on Windows related formats.
 
-![](https://github.com/qtc-de/wconv/workflows/master%20Python%20CI/badge.svg?branch=master)
-![](https://github.com/qtc-de/wconv/workflows/develop%20Python%20CI/badge.svg?branch=develop)
+![](https://github.com/qtc-de/wconv/workflows/master/badge.svg?branch=master)
+![](https://github.com/qtc-de/wconv/workflows/develop/badge.svg?branch=develop)
+[![](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/qtc-de/wconv/releases)
+[![](https://img.shields.io/badge/packaging-pypi-blue)](https://pypi.org/project/wconv/)
+![](https://img.shields.io/badge/python-10%2b-blue)
+[![](https://img.shields.io/badge/license-GPL%20v3.0-blue)](https://github.com/qtc-de/wconv/blob/master/LICENSE)
 ![example-gif](https://github.com/qtc-de/wconv/raw/master/images/example.gif)
 
 
@@ -38,6 +42,8 @@ simple modifications on Windows related formats.
     + [Parse UAC](#parse-uac)
     + [Toggle Flag](#toggle-flag)
     + [Display Mappings](#display-mappings)
+  * [DESC Module](#desc-module)
+    + [Parse SecurityDescriptor](#parse-securitydescriptor)
 - [Library Information](#library-information)
 - [Resources](#resources)
 
@@ -46,11 +52,11 @@ simple modifications on Windows related formats.
 
 ----
 
-*wconv* can be build and installed as a *pip* package. The following
-command installs *wconv* for your current user profile:
+*wconv* can be build and installed as a [pip package](https://pypi.org/project/wconv/).
+The recommended way of installing *wconv* is using [pipx](https://github.com/pypa/pipx)
 
 ```console
-$ pip3 install wconv
+$ pipx install wconv
 ```
 
 You can also build *wconv* from source and install it directly by using
@@ -59,16 +65,27 @@ the following commands:
 ```console
 $ git clone https://github.com/qtc-de/wconv
 $ cd wconv
-$ pip3 install -r requirements.txt
-$ python3 setup.py sdist
-$ pip3 install dist/*
+$ pipx install .
 ```
 
+If you want to use *wconv* as a programming library, simply declare it as a dependency
+of your project. To use the library for simple scripts, install via *pipx* as mentioned
+above and use the venv specific interpreter for script execution. The interpreter can
+be found using:
+
+```console
+$ pipx environment --value PIPX_HOME
+/home/user/.local/pipx
+$ /home/user/.local/pipx/venvs/wconv/bin/python3
+Python 3.11.2 (main, Nov 30 2024, 21:22:50) [GCC 12.2.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import wconv
+```
+ 
 Additionally, *wconv* ships a [bash-completion](./wconv/resources/bash_completion.d/wconv) script.
-The completion script is installed automatically, but relies on the [completion-helpers](https://github.com/qtc-de/completion-helpers)
-package. If *completion-helpers* is already installed, autocompletion for *wconv* should
-work after installing the pip package. Otherwise, you may need to copy the completion
-script manually:
+The completion script relies on the [completion-helpers](https://github.com/qtc-de/completion-helpers)
+package. with *completion-helpers* already installed, the following command enables autocompletion
+for *wconv*:
 
 ```console
 $ cp wconv/resources/bash_completion.d/wconv ~/.bash_completion.d
@@ -85,21 +102,38 @@ operations are demonstrated.
 
 ```console
 $ wconv --help
-usage: wconv [-h] {ace,sddl,sid,uac} ...
+usage: wconv [-h] [--sid-mappings path] [--type-mappings path] {ace,sddl,sid,uac,desc} ...
 
-wconv is a command line utility that can be used to parse and convert certain Windows related representations into human readable formats. Currently the tool supports parsing and convetion of ACE, SDDL, SID and
-UAC values.
+wconv v2.0.0 - a command line utility to convert Windows specific formats into human readable form. Currently, wconv supports convertion of ACE, SDDL, SID, UAC and SecurityDescriptor
+values.
 
 positional arguments:
-  {ace,sddl,sid,uac}
-    ace               convert integer ace
-    sddl              convert sddl string into readable permissions
-    sid               convert Windows SecurityIdentifier formats
-    uac               convert integer UserAccountControl
+  {ace,sddl,sid,uac,desc}
+    ace                 convert integer ace
+    sddl                convert sddl string into readable permissions
+    sid                 convert Windows SecurityIdentifier formats
+    uac                 convert integer UserAccountControl
+    desc                convert security descriptor
 
-optional arguments:
-  -h, --help          show this help message and exit
+options:
+  -h, --help            show this help message and exit
+  --sid-mappings path   file containing SID mappings
+  --type-mappings path  file containing object type mappings
 ```
+
+Aside from the module specific options and flags, *wconv* supports two global options that can be used
+to specify additional information that is accessible from all modules. Using the `--sid-mappings` option,
+you can specify the path to a textfile that contains SID mappings in the following format:
+
+```
+<SID>: <NAME>
+<SID>: <NAME>
+...
+```
+
+The same can be used for *Object Types* using the `--type-mappings` option. Whenever *wconv* attempts
+to print a *SID* or *Object Type*, it checks whether a mapping to a human readable name exists and
+appends this data if present.
 
 
 #### ACE Module
@@ -110,24 +144,21 @@ The *ACE module* supports operations to work with Windows *ACE* values. Its main
 *ACE* values from binary or SDDL format into human readable form.
 
 ```console
-$ wconv ace --help 
-usage: wconv ace [-h] [--ace-flags] [--ace-types] [--ace-permissions] [--from-string] [--type PERMISSION-TYPE] [-t PERMISSION] [--trustees] [-v] [ACE-VALUE]
+$ wconv ace --help
+usage: wconv ace [-h] [--ace-flags] [--ace-types] [--ace-permissions] [--from-string] [--type type] [--toggle perm] [--trustees] [int]
 
 positional arguments:
-  ACE-VALUE             integer ace value
+  int                integer ace value
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --ace-flags           show available ACE flags
-  --ace-types           show available ACE types
-  --ace-permissions     show permission definitions for requested type
-  --from-string         interpret ace value als ace-string (sddl format)
-  --type PERMISSION-TYPE
-                        permission type (defaul: file)
-  -t PERMISSION, --toggle PERMISSION
-                        toogles specified permission on the ace value
-  --trustees            display available trustees
-  -v, --verbose         verbose output
+options:
+  -h, --help         show this help message and exit
+  --ace-flags        show available ACE flags
+  --ace-types        show available ACE types
+  --ace-permissions  show permission definitions for requested type
+  --from-string      interpret ace value als ace-string (sddl format)
+  --type type        permission type (default: file)
+  --toggle perm      toogles specified permission on the ace value
+  --trustees         display available trustees
 ```
 
 ##### From Integer
@@ -165,7 +196,7 @@ $ wconv ace --from-string '(A;OICINPFA;RPSDWD;;;BU)'
 Toggle the specified permission on the ACE value:
 
 ```console
-$ wconv ace 0x00050010 -t WP -t GA
+$ wconv ace 0x00050010 --toggle WP --toggle GA
 [+] Numeric:	0x10050030
 [+] Permissions:	
 [+] 		+ GENERIC_ALL
@@ -312,22 +343,20 @@ $ wconv ace --trustees
 
 ----
 
-The *SDDL module* supports operations to convert *SDDL strings* into human readable forms.
+The *SDDL module* supports operations to convert *SDDL strings* into human readable form.
 
 ```console
 $ wconv sddl --help
-usage: wconv sddl [-h] [--add-everyone] [--add-anonymous] [-t PERMISSION-TYPE] [-v] [SDDL-STRING]
+usage: wconv sddl [-h] [--add-everyone] [--add-anonymous] [--type type] [str]
 
 positional arguments:
-  SDDL-STRING           sddl string
+  str              sddl string
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --add-everyone        add full permissions for everyone
-  --add-anonymous       add full permissions for anonymous
-  -t PERMISSION-TYPE, --type PERMISSION-TYPE
-                        permission type (file, directory, service, ...)
-  -v, --verbose         verbose output
+options:
+  -h, --help       show this help message and exit
+  --add-everyone   add full permissions for everyone
+  --add-anonymous  add full permissions for anonymous
+  --type type      permission type (default: file)
 ```
 
 ##### Parse SDDL
@@ -439,15 +468,15 @@ base64 encoded binary blobs.
 
 ```console
 $ wconv sid --help
-usage: wconv sid [-h] [--to-b64] [--raw] [--well-known] [SID-VALUE]
+usage: wconv sid [-h] [--to-b64] [--raw] [--well-known] [b64]
 
 positional arguments:
-  SID-VALUE     sid value (default format: base64)
+  b64           sid value (default format: base64)
 
-optional arguments:
+options:
   -h, --help    show this help message and exit
-  --to-b64      converts formatted sid to base64
-  --raw         specify sid as raw hex string
+  --to-b64      converts formatted sid (S-1-*) to base64
+  --raw         specify sid as raw hex string (010500...)
   --well-known  display list of well known sids
 ```
 
@@ -511,16 +540,15 @@ the corresponding integer representation again.
 
 ```console
 $ wconv uac --help
-usage: wconv uac [-h] [--mapping] [-t FLAG] [UAC-VALUE]
+usage: wconv uac [-h] [--mapping] [--toggle flag] [int]
 
 positional arguments:
-  UAC-VALUE             binary user account control
+  int            binary user account control value
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --mapping             display UserAccountControl mappings
-  -t FLAG, --toggle FLAG
-                        toogles specified flag on the UserAccountControl value
+options:
+  -h, --help     show this help message and exit
+  --mapping      display UserAccountControl mappings (flags)
+  --toggle flag  toogles specified flag on the UserAccountControl value
 ```
 
 ##### Parse UAC
@@ -541,7 +569,7 @@ $ wconv uac 1114624
 Adds the specified flag(s) to the UAC value:
 
 ```console
-$ wconv uac 1114624 -t DONT_REQ_PREAUTH -t TRUSTED_FOR_DELEGATION 
+$ wconv uac 1114624 --toggle DONT_REQ_PREAUTH --toggle TRUSTED_FOR_DELEGATION 
 [+] UserAccountControl:	5833216 (0x00590200)
 [+]	+ NORMAL_ACCOUNT
 [+]	+ DONT_EXPIRE_PASSWORD
@@ -581,6 +609,120 @@ $ wconv uac --mapping
 ```
 
 
+### DESC Module
+
+----
+
+The *DESC module* supports operations to convert *SecurityDescriptors* into human readable form.
+
+```console
+$ wconv desc -h
+usage: wconv desc [-h] [--hex] [--type type] [--sid sid] [--adminsd] b64
+
+positional arguments:
+  b64          security descriptor in base64
+
+options:
+  -h, --help   show this help message and exit
+  --hex        specify the descriptor in hex format instead
+  --type type  permission type (default: ad)
+  --sid sid    filter for a specific sid
+  --adminsd    filter out inherited ACEs
+```
+
+##### Parse SecurityDescriptor
+
+Parses the given base64 formatted SecurityDescriptor. This is the default action and does not require
+additional flags. When specifying the `--hex` flag, the SecurityDescriptor is expected in hex format
+instead.
+
+```console
+$ wconv desc AQAEjKQgAADAIAAAAAAAA...
+[+] Owner:	S-1-5-21-1004336348-1177238915-682003330-512 (DOMAIN_ADMINS)
+[+] Group:	S-1-5-21-1004336348-1177238915-682003330-513 (DOMAIN_USERS)
+[+] Ace Count:	154
+[+] ACE list:
+[+]
+[+] Trustee:	S-1-5-21-1004336348-1177238915-682003330-519 (ENTERPRISE_ADMINS)
+[+] Numeric:	0x000f01ff
+[+] ACE Flags:
+[+] 		+ CONTAINER_INHERIT
+[+] 		+ INHERITED
+[+] Permissions:
+[+] 		+ DELETE
+[+] 		+ READ_CONTROL
+[+] 		+ WRITE_DACL
+[+] 		+ WRITE_OWNER
+[+] 		+ DS_CREATE_CHILD
+[+] 		+ DS_DELETE_CHILD
+[+] 		+ ACTRL_DS_LIST
+[+] 		+ DS_SELF
+[+] 		+ DS_READ_PROP
+[+] 		+ DS_WRITE_PROP
+[+] 		+ DS_DELETE_TREE
+[+] 		+ DS_LIST_OBJECT
+[+] 		+ DS_CONTROL_ACCESS
+[+]
+[+] Trustee:	S-1-5-32-554 (ALIAS_PREW2KCOMPACC)
+[+] Numeric:	0x00000004
+[+] ACE Flags:
+[+] 		+ CONTAINER_INHERIT
+[+] 		+ INHERITED
+[+] Permissions:
+[+] 		+ ACTRL_DS_LIST
+[+]
+[+] Trustee:	S-1-5-32-544 (BUILTIN_ADMINISTRATORS)
+[+] Numeric:	0x000f01bd
+[+] ACE Flags:
+[+] 		+ CONTAINER_INHERIT
+[+] 		+ INHERITED
+[+] Permissions:
+[+] 		+ DELETE
+[+] 		+ READ_CONTROL
+[+] 		+ WRITE_DACL
+[+] 		+ WRITE_OWNER
+[+] 		+ DS_CREATE_CHILD
+[+] 		+ ACTRL_DS_LIST
+[+] 		+ DS_SELF
+[+] 		+ DS_READ_PROP
+[+] 		+ DS_WRITE_PROP
+[+] 		+ DS_LIST_OBJECT
+[+] 		+ DS_CONTROL_ACCESS
+...
+```
+
+##### AdminSDHolder Filtering
+
+ACE inheritance is deactivated for Active Directory objects protected by AdminSDHolder.
+To filter inherited permissions, you can use the `--adminsd` flag.
+
+```console
+$ wconv desc AQAEjKQgAADAIAAAAAAAA... --adminsd
+[+] ACE Type:	ACCESS_ALLOWED_OBJECT
+[+] Trustee:	S-1-5-32-560 (WINDOWS_AUTHORIZATION_ACCESS_GROUP)
+[+] Numeric:	0x00000010
+[+] Obj Type:	46a9b11d-60ae-405a-b7e8-ff8a58d456d2 (Token-Groups-Global-And-Universal)
+[+] Permissions:
+[+] 		+ DS_READ_PROP
+[+]
+[+] ACE Type:	ACCESS_ALLOWED_OBJECT
+[+] Trustee:	S-1-5-32-561 (TERMINAL_SERVER_LICENSE_SERVERS)
+[+] Numeric:	0x00000030
+[+] Obj Type:	6db69a1c-9422-11d1-aebd-0000f80367c1 (Terminal-Server)
+[+] Permissions:
+[+] 		+ DS_READ_PROP
+[+] 		+ DS_WRITE_PROP
+[+]
+[+] ACE Type:	ACCESS_ALLOWED_OBJECT
+[+] Trustee:	S-1-5-32-561 (TERMINAL_SERVER_LICENSE_SERVERS)
+[+] Numeric:	0x00000030
+[+] Obj Type:	5805bc62-bdc9-4428-a5e2-856a0f4c185e (Terminal-Server-License-Server)
+[+] Permissions:
+[+] 		+ DS_READ_PROP
+[+] 		+ DS_WRITE_PROP
+```
+
+
 ### Library Information
 
 ----
@@ -603,6 +745,6 @@ Windows structures.
 * [Understanding Windows File And Registry Permissions](https://docs.microsoft.com/en-us/archive/msdn-magazine/2008/november/access-control-understanding-windows-file-and-registry-permissions)
 * [How do I convert a SID between binary and string forms](https://devblogs.microsoft.com/oldnewthing/20040315-00/?p=40253)
 * [How to use the UserAccountControl flags](https://support.microsoft.com/en-us/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties)
+* [Parsing-the-NtSecurityDescriptor](https://www.chadsikorra.com/blog/Parsing-the-NtSecurityDescriptor)
+* [ldaptools](https://github.com/ldaptools/ldaptools)
 * [sddl.py](https://github.com/tojo2k/pysddl/blob/master/sddl.py/sddl.py)
-
-*Copyright 2020, Tobias Neitzel and the wconv contributors.*

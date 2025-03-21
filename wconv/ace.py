@@ -1,29 +1,86 @@
 #!/usr/bin/python3
 
-from termcolor import cprint
+from __future__ import annotations
+
+import struct
+
+from uuid import UUID
+
 from wconv import WConvException
+from wconv.objecttype import ObjectType
+from wconv.sid import SecurityIdentifier
+from wconv.helpers import print_yellow, print_blue, print_magenta, get_int
 
 
 ACE_TYPES = {
-    "A": "ACCESS_ALLOWED",
-    "D": "ACCESS_DENIED",
-    "OA": "ACCESS_ALLOWED_OBJECT",
-    "OD": "ACCESS_DENIED_OBJECT",
-    "AU": "SYSTEM_AUDIT",
-    "AL": "SYSTEM_ALARM",
-    "OU": "SYSTEM_AUDIT_OBJECT",
-    "OL": "SYSTEM_ALARM_OBJECT"
+    0x00: 'ACCESS_ALLOWED',
+    0x01: 'ACCESS_DENIED',
+    0x02: 'SYSTEM_AUDIT',
+    0x03: 'SYSTEM_ALARM',
+    0x04: 'ACCESS_ALLOWED_COMPOUND',
+    0x05: 'ACCESS_ALLOWED_OBJECT',
+    0x06: 'ACCESS_DENIED_OBJECT',
+    0x07: 'SYSTEM_AUDIT_OBJECT',
+    0x08: 'SYSTEM_ALARM_OBJECT',
+    0x09: 'ACCESS_ALLOWED_CALLBACK',
+    0x0A: 'ACCESS_DENIED_CALLBACK',
+    0x0B: 'ACCESS_ALLOWED_CALLBACK_OBJECT',
+    0x0C: 'ACCESS_DENIED_CALLBACK_OBJECT',
+    0x0D: 'SYSTEM_AUDIT_CALLBACK',
+    0x0E: 'SYSTEM_ALARM_CALLBACK',
+    0x0F: 'SYSTEM_AUDIT_CALLBACK_OBJECT',
+    0x10: 'SYSTEM_ALARM_CALLBACK_OBJECT',
+    0x11: 'SYSTEM_MANDATORY_LABEL',
+    0x12: 'SYSTEM_RESOURCE_ATTRIBUTE',
+    0x13: 'SYSTEM_SCOPED_POLICY_ID'
 }
 
-ACE_FLAGS = {
-    "CI": "CONTAINER_INHERIT",
-    "OI": "OBJECT_INHERIT",
-    "NP": "NO_PROPAGATE_INHERIT",
-    "IO": "INHERIT_ONLY",
-    "ID": "INHERITED",
-    "SA": "SUCCESSFUL_ACCESS",
-    "FA": "FAILED_ACCESS"
+
+ACE_SDDL = {
+    'A': 0x00,
+    'D': 0x01,
+    'AU': 0x02,
+    'AL': 0x03,
+    'CA': 0x04,
+    'OA': 0x05,
+    'OD': 0x06,
+    'OU': 0x07,
+    'OL': 0x08,
+    'XA': 0x09,
+    'XD': 0x0A,
+    'ZA': 0x0B,
+    'ZD': 0x0C,
+    'XU': 0x0D,
+    'XL': 0x0E,
+    'ZU': 0x0F,
+    'ZL': 0x10,
+    'ML': 0x11,
+    'RA': 0x12,
+    'SP': 0x13,
 }
+
+
+ACE_FLAGS = {
+    0x01: 'OBJECT_INHERIT',
+    0x02: 'CONTAINER_INHERIT',
+    0x04: 'NO_PROPAGATE_INHERIT',
+    0x08: 'INHERIT_ONLY',
+    0x10: 'INHERITED',
+    0x40: 'SUCCESSFUL_ACCESS',
+    0x80: 'FAILED_ACCESS',
+}
+
+
+ACE_FLAGS_SDDL = {
+    'OI': 0x01,
+    'CI': 0x02,
+    'NP': 0x04,
+    'IO': 0x08,
+    'ID': 0x10,
+    'SA': 0x40,
+    'FA': 0x80,
+}
+
 
 GENERIC_PERMISSIONS = {
     "GA": "GENERIC_ALL",
@@ -37,6 +94,7 @@ GENERIC_PERMISSIONS = {
     "WO": "WRITE_OWNER"
 }
 
+
 PERMISSIONS_FILE = {
     "CC": "READ",
     "DC": "WRITE",
@@ -48,6 +106,7 @@ PERMISSIONS_FILE = {
     "LO": "READ_ATTRIBUTES",
     "CR": "WRITE_ATTRIBUTES"
 }
+
 
 PERMISSIONS_DIRECTORY = {
     "CC": "LIST",
@@ -61,6 +120,7 @@ PERMISSIONS_DIRECTORY = {
     "CR": "WRITE_ATTRIBUTES"
 }
 
+
 PERMISSIONS_FILE_MAP = {
     "CC": "FILE_MAP_COPY",
     "DC": "FILE_MAP_WRITE",
@@ -69,6 +129,7 @@ PERMISSIONS_FILE_MAP = {
     "RP": "FILE_MAP_EXTEND_MAX_SIZE",
     "WP": "SECTION_MAP_EXECUTE_EXPLICIT"
 }
+
 
 PERMISSIONS_REGISTRY = {
     "CC": "QUERY",
@@ -79,6 +140,7 @@ PERMISSIONS_REGISTRY = {
     "WP": "CREATE_LINK"
 }
 
+
 PERMISSIONS_SERVICE_CONTROL = {
     "CC": "CONNECT",
     "DC": "CREATE_SERVICE",
@@ -87,6 +149,7 @@ PERMISSIONS_SERVICE_CONTROL = {
     "RP": "QUERY_LOCK",
     "WP": "MODIFY_BOOT_CFG"
 }
+
 
 PERMISSIONS_SERVICE = {
     "CC": "QUERY_CONFIG",
@@ -100,6 +163,7 @@ PERMISSIONS_SERVICE = {
     "CR": "USER_DEFINIED"
 }
 
+
 PERMISSIONS_PROCESS = {
     "CC": "TERMINATE",
     "DC": "CREATE_THREAD",
@@ -111,6 +175,7 @@ PERMISSIONS_PROCESS = {
     "LO": "CREATE_PROCESS",
     "CR": "SET_QUOTA"
 }
+
 
 PERMISSIONS_THREAD = {
     "CC": "TERMINATE",
@@ -124,6 +189,7 @@ PERMISSIONS_THREAD = {
     "CR": "IMPERSONATE"
 }
 
+
 PERMISSIONS_WINDOW_STATION = {
     "CC": "ENUM_DESKTOPS",
     "DC": "READ_ATTRIBUTE",
@@ -135,6 +201,7 @@ PERMISSIONS_WINDOW_STATION = {
     "LO": "",
     "CR": "ENUM_WINSTA"
 }
+
 
 PERMISSIONS_DESKTOP = {
     "CC": "READ_OBJECTS",
@@ -148,6 +215,7 @@ PERMISSIONS_DESKTOP = {
     "CR": "SWITCH_DESKTOP"
 }
 
+
 PERMISSIONS_PIPE = {
     "CC": "READ",
     "DC": "WRITE",
@@ -159,6 +227,7 @@ PERMISSIONS_PIPE = {
     "LO": "READ_ATTRIBUTES",
     "CR": "WRITE_ATTRIBUTES"
 }
+
 
 PERMISSIONS_TOKEN = {
     "CC": "ASSIGN_PRIMARY",
@@ -172,8 +241,33 @@ PERMISSIONS_TOKEN = {
     "CR": "ADJUST_SESSION"
 }
 
+
+PERMISSIONS_AD = {
+    'SD': 'DELETE',
+    'RC': 'READ_CONTROL',
+    'WD': 'WRITE_DACL',
+    'WO': 'WRITE_OWNER',
+    'SY': 'SYNCHRONIZE',
+    'AS': 'ACCESS_SYSTEM_SECURITY',
+    'MA': 'MAXIMUM_ALLOWED',
+    'GR': 'GENERIC_READ',
+    'GW': 'GENERIC_WRITE',
+    'GX': 'GENERIC_EXECUTE',
+    'GA': 'GENERIC_ALL',
+    'CC': 'DS_CREATE_CHILD',
+    'DC': 'DS_DELETE_CHILD',
+    'LC': 'ACTRL_DS_LIST',
+    'SW': 'DS_SELF',
+    'RP': 'DS_READ_PROP',
+    'WP': 'DS_WRITE_PROP',
+    'DT': 'DS_DELETE_TREE',
+    'LO': 'DS_LIST_OBJECT',
+    'CR': 'DS_CONTROL_ACCESS',
+}
+
+
 GROUPED_PERMISSIONS = {
-    "FA": "READ_CONTROL,DELETE,WRITE_DAC,WRITE_OWNER,SYNCHRONIZE,READ,WRITE,APPEND,READ_EXTENDED_ATTRIBUTES, \
+    "FA": "READ_CONTROL,DELETE,WRITE_DAC,WRITE_OWNER,SYNCHRONIZE,READ,WRITE,APPEND,READ_EXTENDED_ATTRIBUTES,\
 WRITE_EXTENDED_ATTRIBUTES,EXECUTE,MEANINGLESS,READ_ATTRIBUTES,WRITE_ATTRIBUTES",
     "FR": "READ_CONTROL,READ,READ_ATTRIBUTES,READ_EXTENDED_ATTRIBUES,SYNCHRONIZE",
     "FW": "READ_CONTROL,WRITE,WRITE_ATTRIBUTES,WRITE_EXTENDED_ATTRIBUES,APPEND,SYNCHRONIZE",
@@ -183,6 +277,7 @@ WRITE_EXTENDED_ATTRIBUTES,EXECUTE,MEANINGLESS,READ_ATTRIBUTES,WRITE_ATTRIBUTES",
     "KW": "READ_CONTROL,SET,CREATE_SUB_KEY",
     "KE": "READ_CONTROL,QUERY,ENUM_SUB_KEYS,NOTIFY"
 }
+
 
 TRUSTEES = {
     'AN': 'Anonymous',
@@ -232,12 +327,16 @@ TRUSTEES = {
     'WR': 'Write restricted Code',
 }
 
+
 ACCESS_MASK_HEX = dict([
     (0x10000000, 'GA'),
     (0x20000000, 'GX'),
     (0x40000000, 'GW'),
     (0x80000000, 'GR'),
 
+    (0x02000000, 'MA'),
+    (0x01000000, 'AS'),
+    (0x00100000, 'SY'),
     (0x00010000, 'SD'),
     (0x00020000, 'RC'),
     (0x00040000, 'WD'),
@@ -264,12 +363,16 @@ ACCESS_MASK_HEX = dict([
     (0x00020019, 'KE')
 ])
 
+
 ACCESS_MASK_HEX_REVERSE = dict([
     ('GA', 0x10000000),
     ('GX', 0x20000000),
     ('GW', 0x40000000),
     ('GR', 0x80000000),
 
+    ('MA', 0x02000000),
+    ('AS', 0x01000000),
+    ('SY', 0x00100000),
     ('SD', 0x00010000),
     ('RC', 0x00020000),
     ('WD', 0x00040000),
@@ -296,7 +399,9 @@ ACCESS_MASK_HEX_REVERSE = dict([
     ('KE', 0x00020019)
 ])
 
+
 PERM_TYPE_MAPPING = {
+    'ad':               dict(GENERIC_PERMISSIONS, **PERMISSIONS_AD),
     'file':             dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE),
     'directory':        dict(GENERIC_PERMISSIONS, **PERMISSIONS_DIRECTORY),
     'file_map':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE_MAP),
@@ -312,17 +417,17 @@ PERM_TYPE_MAPPING = {
 }
 
 
-def get_permission_dict(permission_type):
+def get_permission_dict(permission_type: str) -> dict:
     '''
     The meaning of permission shortnames like 'CC' change depending on the resource
     they are assigned to. This function returns the corresponding dictionary for
     the requested permission type.
 
     Parameters:
-        permission_type         (string)        Permission type (file, service, ...)
+        permission_type         Permission type (file, service, ...)
 
     Returns:
-        permission_dict         (dict)          Dictionary containing permission map
+        Dictionary containing permission map
     '''
     try:
         mapping = PERM_TYPE_MAPPING[permission_type]
@@ -339,21 +444,22 @@ class Ace:
     ace_everyone = '(A;;GAGRGWGXRCSDWDWOSSCCDCLCSWRPWPDTLOCR;;;WD)'
     ace_anonymous = '(A;;GAGRGWGXRCSDWDWOSSCCDCLCSWRPWPDTLOCR;;;AN)'
 
-    def __init__(self, ace_type, ace_flags, permissions, object_type, inherited_object_type, trustee, numeric):
+    def __init__(self, ace_type: int, ace_flags: list[str], permissions: list[str], object_type: str,
+                 inherited_object_type: str, trustee: str, numeric: int) -> None:
         '''
         The init function takes the six different ACE components and constructs an object out of them.
 
         Parameters:
-            ace_type        (string)            ace_type according to the sddl specifications
-            ace_flags       (list[string])      ace_flags according to the sddl specifications
-            permissions     (list[string])      permissions defined inside the ACE
-            object_type     (string)            object_type according to the sddl specifications
-            i_object_type   (string)            inherited_object_type according to the sddl specifications
-            trustee         (string)            trustee the ACE applies to
-            numeric         (int)               Integer ace value
+            ace_type        integer that specifies the ACE type (see ACE_TYPES)
+            ace_flags       ace_flags according to the sddl specifications
+            permissions     permissions defined inside the ACE
+            object_type     object_type according to the sddl specifications
+            i_object_type   inherited_object_type according to the sddl specifications
+            trustee         trustee the ACE applies to
+            numeric         Integer ace value
 
         Returns:
-            ace_object      (Ace)               New generated ACE object
+            None
         '''
         self.ace_type = ace_type
         self.ace_flags = ace_flags
@@ -363,7 +469,7 @@ class Ace:
         self.trustee = trustee
         self.numeric = numeric
 
-    def __str__(self):
+    def __str__(self) -> str:
         '''
         Outputs a simple string represenation of the ACE. Only used for debugging purposes.
 
@@ -371,12 +477,11 @@ class Ace:
             None
 
         Returns:
-            None
+            String representation of ACE
         '''
-        if self.ace_type:
-            result = f'ACE Type:\t {self.ace_type}\n'
+        result = f'ACE Type:\t {ACE_TYPES[self.ace_type]}\n'
 
-        if self.ace_trustee:
+        if self.trustee:
             result += f'Trustee:\t {self.trustee}\n'
 
         if self.permissions:
@@ -391,54 +496,66 @@ class Ace:
 
         return result[:-1]
 
-    def pretty_print(self, indent=' ', verbose=False):
+    def pretty_print(self, indent: str = ' ') -> None:
         '''
         Prints some formatted and colored output that represents the ACE. Probably not really
         ideal to be placed inside a library, but for now we can live with that.
 
         Parameters:
-            indent          (string)            Spaces after the '[+]' prefix
-            verbose         (boolean)           Decides if ACE flags are printed
+            indent          Spaces after the '[+]' prefix
 
         Returns:
             None
         '''
         if self.ace_type:
-            cprint(f'[+]{indent}ACE Type:\t', 'blue', end='')
-            cprint(self.ace_type, 'yellow')
+            print_blue(f'[+]{indent}ACE Type:\t', end='')
+            print_yellow(ACE_TYPES[self.ace_type])
 
         if self.trustee:
-            cprint(f'[+]{indent}Trustee:\t', 'blue', end='')
-            cprint(self.trustee, 'yellow')
+            print_blue(f'[+]{indent}Trustee:\t', end='')
+
+            if type(self.trustee) is SecurityIdentifier:
+                self.trustee.pretty_print()
+
+            else:
+                print_yellow(self.trustee)
 
         if self.numeric:
-            cprint(f'[+]{indent}Numeric:\t', 'blue', end='')
-            cprint('0x{:08x}'.format(self.numeric), 'yellow')
+            print_blue(f'[+]{indent}Numeric:\t', end='')
+            print_yellow('0x{:08x}'.format(self.numeric))
 
-        if verbose:
-            if self.ace_flags:
+        if self.ace_flags:
 
-                cprint(f'[+]{indent}ACE Flags:\t', 'blue')
-                for flag in self.ace_flags:
-                    cprint('[+]', 'blue', end='')
-                    cprint(f'{indent}\t\t+ {flag}', 'yellow')
+            print_blue(f'[+]{indent}ACE Flags:')
+
+            for flag in self.ace_flags:
+                print_blue('[+]', end='')
+                print_yellow(f'{indent}\t\t+ {flag}')
+
+        if self.object_type:
+            print_blue(f'[+]{indent}Obj Type:\t', end='')
+            self.object_type.pretty_print()
+
+        if self.inherited_object_type:
+            print_blue(f'[+]{indent}IObj Type:\t', end='')
+            self.inherited_object_type.pretty_print()
 
         if self.permissions:
 
-            cprint(f'[+]{indent}Permissions:\t', 'blue')
+            print_blue(f'[+]{indent}Permissions:')
             for perm in self.permissions:
-                cprint('[+]', 'blue', end='')
-                cprint(f'{indent}\t\t+ {perm}', 'yellow')
+                print_blue('[+]', end='')
+                print_yellow(f'{indent}\t\t+ {perm}')
 
-    def clear_parentheses(ace_string):
+    def clear_parentheses(ace_string: str) -> str:
         '''
         Removes the opening and closing parantheses from an ACE string (if present).
 
         Paramaters:
-            ace_string      (string)            ACE string to operate on
+            ace_string      ACE string to operate on
 
         Returns:
-            ace_string      (string)            ACE string without parentheses
+            ACE string without parentheses
         '''
         if ace_string[0] == '(':
             ace_string = ace_string[1:]
@@ -448,16 +565,16 @@ class Ace:
 
         return ace_string
 
-    def get_ace_flags(ace_flag_string):
+    def get_ace_flags(ace_flag_string: str) -> list[str]:
         '''
         Parses the flag-portion of an ACE string and returns a list of the corresponding
         ACE flags.
 
         Paramaters:
-            ace_flag_string (string)            String containing the ACE flags
+            ace_flag_string String containing the ACE flags
 
         Returns:
-            ace_flags       (list[string])      List containing the parsed ACE flags
+            List containing the parsed ACE flags
         '''
         ace_flags = []
 
@@ -465,7 +582,7 @@ class Ace:
 
             try:
                 ace_flag = ace_flag_string[ctr:ctr+2]
-                ace_flag = ACE_FLAGS[ace_flag]
+                ace_flag = ACE_FLAGS[ACE_FLAGS_SDDL[ace_flag]]
                 ace_flags.append(ace_flag)
 
             except KeyError:
@@ -473,17 +590,17 @@ class Ace:
 
         return ace_flags
 
-    def get_ace_permissions(ace_permission_string, perm_type='file'):
+    def get_ace_permissions(ace_permission_string: str, perm_type: str = 'file') -> list[str]:
         '''
         Takes the ACE portion containing the permission and returns a list of the corresponding parsed
         permissions.
 
         Paramaters:
-            ace_permission_string   (string)        String containing the ACE permissions
-            perm_type               (string)        Permission type (file, service, ...)
+            ace_permission_string   String containing the ACE permissions
+            perm_type               Permission type (file, service, ...)
 
         Returns:
-            permissions             (list[string])  List of corresponding permissions
+            List of corresponding permissions
         '''
         permissions = []
         perm_dict = get_permission_dict(perm_type)
@@ -507,15 +624,15 @@ class Ace:
 
         return permissions
 
-    def get_ace_numeric(ace_permission_string):
+    def get_ace_numeric(ace_permission_string: str) -> int:
         '''
         Takes the ACE portion containing the permission and returns the corresponding integer value.
 
         Paramaters:
-            ace_permission_string   (string)        String containing the ACE permissions
+            ace_permission_string   String containing the ACE permissions
 
         Returns:
-            ace_int                 (int)           Corresponding integer value
+            Corresponding integer value
         '''
         ace_int = 0
 
@@ -531,25 +648,26 @@ class Ace:
 
         return ace_int
 
-    def from_string(ace_string, perm_type='file'):
+    def from_string(ace_string: str, perm_type: str = 'file') -> Ace:
         '''
         Parses an ace from a string in SDDL representation (e.g. A;OICI;FA;;;BA).
 
         Parameters:
-            ace_string      (string)            ACE string in sddl format
-            perm_type       (string)            Object type the sddl applies to (file, service, ...)
+            ace_string      ACE string in sddl format
+            perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
-            ace_object      (Ace)
+            ace_object
         '''
         ace_string = Ace.clear_parentheses(ace_string)
-
         ace_split = ace_string.split(';')
+
         if len(ace_split) != 6:
             raise WConvException(f"from_string(... - Specified value '{ace_string}' is not a valid ACE string.")
 
         try:
-            ace_type = ACE_TYPES[ace_split[0]]
+            ace_type = ACE_SDDL[ace_split[0]]
+
         except KeyError:
             raise WConvException(f"from_string(... - Unknown ACE type '{ace_split[0]}'.")
 
@@ -560,27 +678,30 @@ class Ace:
         object_type = ace_split[3]
         inherited_object_type = ace_split[4]
 
+        if object_type:
+            object_type = ObjectType(object_type)
+
+        if inherited_object_type:
+            inherited_object_type = ObjectType(inherited_object_type)
+
         trustee = ace_split[5]
         if trustee in TRUSTEES:
             trustee = TRUSTEES[trustee]
 
         return Ace(ace_type, ace_flags, permissions, object_type, inherited_object_type, trustee, ace_int)
 
-    def from_int(integer, perm_type='file'):
+    def from_int(integer: str | int, perm_type: str = 'file') -> Ace:
         '''
         Parses an ace from an integer value in string representation.
 
         Parameters:
-            integer         (string)            Integer value as string (hex also allowed)
-            perm_type       (string)            Object type the sddl applies to (file, service, ...)
+            integer         Integer value as string (hex also allowed)
+            perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
-            ace_object      (Ace)
+            ace_object
         '''
-        try:
-            ace_int = int(integer, 0)
-        except ValueError:
-            raise WConvException(f"from_int(... - Specified value '{integer}' is not an integer.")
+        ace_int = get_int(integer)
 
         perm_dict = get_permission_dict(perm_type)
         permissions = []
@@ -599,21 +720,75 @@ class Ace:
 
         return Ace(None, None, permissions, None, None, None, ace_int)
 
-    def toggle_permission(integer, permissions):
+    def from_bytes(byte_data: bytes, perm_type: str = 'file') -> Ace:
+        '''
+        Parses an ACE from a bytes object.
+
+        Parameters:
+            byte_data       byte data of the ACE
+            perm_type       Object type the sddl applies to (file, service, ...)
+
+        Returns:
+            ace_object
+        '''
+        ace_type = ord(struct.unpack('<c', byte_data[0:1])[0])
+        ace_flags = ord(struct.unpack('<c', byte_data[1:2])[0])
+
+        ace_flag_list = []
+
+        for key, value in ACE_FLAGS.items():
+
+            if ace_flags & key != 0:
+                ace_flag_list.append(value)
+
+        position = 8
+        object_type = None
+        object_type_inherited = None
+
+        if ACE_TYPES[ace_type].endswith('OBJECT'):
+
+            object_flags = struct.unpack('<I', byte_data[position:position + 4])[0]
+            position += 4
+
+            if object_flags & 0x00000001:  # OBJECT_TYPE_PRESENT
+                object_type = ObjectType(byte_data[position:position + 16])
+                position += 16
+
+            if object_flags & 0x00000002:  # INHERITED_OBJECT_TYPE_PRESENT
+                object_type_inherited = ObjectType(byte_data[position:position + 16])
+                position += 16
+
+        ace_perms = struct.unpack('<I', byte_data[4:8])[0]
+        trustee = SecurityIdentifier(byte_data[position:], False)
+
+        perm_dict = get_permission_dict(perm_type)
+        permissions = []
+
+        for key, value in ACCESS_MASK_HEX.items():
+
+            if key & ace_perms:
+
+                try:
+                    permission = perm_dict[value]
+                    permissions.append(permission)
+
+                except KeyError:
+                    pass
+
+        return Ace(ace_type, ace_flag_list, permissions, object_type, object_type_inherited, trustee, ace_perms)
+
+    def toggle_permission(integer: str | int, permissions: list[str]) -> str:
         '''
         Takes an ace in integer format and toggles the specified permissions on it.
 
         Parameters:
-            integer         (string)            Integer value as string (hex also allowed)
-            permissions     (list[string])      List of permission to toggle (GA, GR, GW, GE, CC, ...)
+            integer         Integer value as string (hex also allowed)
+            permissions     List of permission to toggle (GA, GR, GW, GE, CC, ...)
 
         Returns:
-            integer         (string)            Resulting ace value as integer in hex format
+            Resulting ace value as integer in hex format
         '''
-        try:
-            ace_int = int(integer, 0)
-        except ValueError:
-            raise WConvException(f"from_int(... - Specified value '{integer}' is not an integer.")
+        ace_int = get_int(integer)
 
         for permission in permissions:
 

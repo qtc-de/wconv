@@ -1,11 +1,14 @@
 #!/usr/bin/python3
 
+from __future__ import annotations
+
 import re
 import base64
 import binascii
 
-from termcolor import cprint
 from wconv import WConvException
+from wconv.helpers import print_yellow, print_blue, print_magenta
+
 
 WELL_KNOWN_SIDS = {
     "S-1-0-0": "NULL",
@@ -117,47 +120,48 @@ WELL_KNOWN_SIDS = {
 }
 
 
+KNOWN_SIDS = {}
+
+
 class SecurityIdentifier:
     '''
     Represents a Windows Security Identifier.
     '''
 
-    def __init__(self, binary):
+    def __init__(self, binary: bytes, check_length: bool = True) -> None:
         '''
         Initializes a SecurityIdentifier object by using its raw (bytes) representation.
 
         Parameters:
-            binary              (bytes)             Security identifier in bytes format
+            binary              Security identifier in bytes format
+            check_length        Whether to check the length of the inpurt string
 
         Returns:
-            SecurityIdentifier  (SecurityIdentifier)
+            SecurityIdentifier
         '''
         self.raw_sid = binary
-        self.parsed_sid = SecurityIdentifier.parse_binary(binary)
-        self.formatted_sid = SecurityIdentifier.format_sid(self.parsed_sid)
-        self.well_known = SecurityIdentifier.get_well_known(self.formatted_sid)
 
-    def __str__(self):
+        self.parsed_sid = SecurityIdentifier.parse_binary(binary, check_length)
+        self.formatted_sid = SecurityIdentifier.format_sid(self.parsed_sid)
+
+        self.name = SecurityIdentifier.get_well_known(self.formatted_sid) or KNOWN_SIDS.get(self.formatted_sid)
+
+    def __str__(self) -> str:
         '''
-        Returns a simple representation of the SecurityIdentifier object. Useful for
-        debugging purposes.
+        Returns the SecurityIdentifier in string format.
 
         Parameters:
             None
 
         Returns:
-            None
+            String representation of the SID
         '''
-        result = f'{self.formatted_sid}'
+        return self.formatted_sid
 
-        if self.well_known:
-            result += f' ({self.well_known})'
-
-        return result
-
-    def pretty_print(self):
+    def pretty_print(self, end: str = '\n') -> None:
         '''
         Prints a colored and formatted output of the SecurityIdentifier object.
+        This includes the resolved human readable name, if present.
 
         Parameters:
             None
@@ -165,74 +169,37 @@ class SecurityIdentifier:
         Returns:
             None
         '''
-        cprint('[+] SID: ', 'blue', end='')
-        cprint(self.formatted_sid, 'yellow', end='')
+        print_yellow(self.formatted_sid, end='')
 
-        if self.well_known:
-            cprint(' (', 'blue', end='')
-            cprint(self.well_known, 'yellow', end='')
-            cprint(')', 'blue', end='')
+        if self.name:
+            print_magenta(f' ({self.name})', end='')
 
-        print()
+        print(end=end)
 
-    def parse_binary(binary):
+    def get_binary_length(self) -> int:
         '''
-        Parse the different components of a binary SID and return them as an array of integers.
+        Returns the binary length of the sid.
 
         Parameters:
-            binary          (bytes)             binary representation of a SID
+            None
 
         Returns:
-            items           (list[int])         list of integer components of the SID
+            Binary length of the SID as int
         '''
-        revision = binary[0]
-        if revision != 1:
-            raise WConvException(f"parse_sid(... - Unknown SID version '{revision}'.")
+        dash_count = self.binary[1]
+        return dash_count * 4 + 8
 
-        dash_count = binary[1]
-        if dash_count * 4 + 8 != len(binary):
-            raise WConvException("parse_sid(... - SID has an invalid length.")
-
-        authority = int.from_bytes(binary[2:8], 'big')
-
-        items = [revision, authority]
-        for count in range(0, dash_count * 4, 4):
-            item = binary[8 + count:8 + count + 4]
-            item = int.from_bytes(item, 'little')
-            items.append(item)
-
-        return items
-
-    def format_sid(sid_value):
+    def get_well_known(sid_string: str) -> str:
         '''
-        Takes a Security Identifier and converts it into a SID string.
-
-        Parameters:
-            sid_vaue        (bytes|list[int])   Security identifier either as raw bytes or as parsed list
-
-        Returns:
-            result          (string)            SID string
-        '''
-        if isinstance(sid_value, bytes):
-            sid_value = SecurityIdentifier.parse_binary(sid_value)
-
-        result = 'S-'
-        for item in sid_value:
-            result += str(item)
-            result += '-'
-
-        result = result[0:-1]
-        return result
-
-    def get_well_known(sid_string):
-        '''
-        Get the well known name for the specified SID string.
+        Get the well known name for the specified SID string. Notice that the
+        WELL_KNOWN_SIDS dictionary contains regex like expression. A simple
+        dictionary lookup is therefore not sufficient.
 
         Paramaters:
-            sid_string      (string)            SID string to look for
+            sid_string      SID string to look for
 
         Returns:
-            value           (string)            Well known name of the SID or None
+            Well known name of the SID or None
         '''
         for key, value in WELL_KNOWN_SIDS.items():
 
@@ -241,7 +208,60 @@ class SecurityIdentifier:
 
         return None
 
-    def to_b64(self):
+    def parse_binary(binary: bytes, check_length: bool) -> list[int]:
+        '''
+        Parse the different components of a binary SID and return them as an array of integers.
+
+        Parameters:
+            binary          binary representation of a SID
+            check_length    whether to check the length of the input string
+
+        Returns:
+            list of integer components of the SID
+        '''
+        revision = binary[0]
+
+        if revision != 1:
+            raise WConvException(f"parse_sid(... - Unknown SID version '{revision}'.")
+
+        dash_count = binary[1]
+
+        if check_length and dash_count * 4 + 8 != len(binary):
+            raise WConvException("parse_sid(... - SID has an invalid length.")
+
+        authority = int.from_bytes(binary[2:8], 'big')
+
+        items = [revision, authority]
+
+        for count in range(0, dash_count * 4, 4):
+            item = binary[8 + count:8 + count + 4]
+            item = int.from_bytes(item, 'little')
+            items.append(item)
+
+        return items
+
+    def format_sid(sid_value: bytes | list[int]) -> str:
+        '''
+        Takes a Security Identifier and converts it into a SID string.
+
+        Parameters:
+            sid_vaue        Security identifier either as raw bytes or as parsed list
+
+        Returns:
+            SID string
+        '''
+        if isinstance(sid_value, bytes):
+            sid_value = SecurityIdentifier.parse_binary(sid_value)
+
+        result = 'S-'
+
+        for item in sid_value:
+            result += str(item)
+            result += '-'
+
+        return result[0:-1]
+
+    def to_b64(self) -> str:
         '''
         Converts an SecurityIdentifier object to base64.
 
@@ -249,54 +269,56 @@ class SecurityIdentifier:
             None
 
         Returns:
-            b64             (string)            Base64 encoded SID value
+            Base64 encoded SID value
         '''
         b64 = base64.b64encode(self.raw_sid)
         return b64.decode('utf-8')
 
-    def from_b64(b64_sid):
+    def from_b64(b64_sid: str) -> SecurityIdentifier:
         '''
         Creates an SecurityIdentifier object from a base64 string.
 
         Paramaters:
-            b64_sid         (string)            SID in base64 format
+            b64_sid         SID in base64 format
 
         Returns:
-            object          (SecurityIdentifier)
+            SecurityIdentifier
         '''
         try:
             binary = base64.b64decode(b64_sid)
+
         except Exception as e:
             raise WConvException(f"from_b64(... - Specified base64 string is malformed: '{str(e)}'.")
 
         return SecurityIdentifier(binary)
 
-    def from_hex(hex_sid):
+    def from_hex(hex_sid: str) -> SecurityIdentifier:
         '''
         Creates an SecurityIdentifier object from a hex string.
 
         Paramaters:
-            hex_sid         (string)            SID in hex format
+            hex_sid         SID in hex format
 
         Returns:
-            object          (SecurityIdentifier)
+            SecurityIdentifier
         '''
         try:
             binary = binascii.unhexlify(hex_sid)
+
         except binascii.Error as e:
             raise WConvException(f"from_hex(... - Specified hex string is malformed: '{str(e)}'.")
 
         return SecurityIdentifier(binary)
 
-    def from_formatted(sid_string):
+    def from_formatted(sid_string: str) -> SecurityIdentifier:
         '''
         Creates an SecurityIdentifier object from an SID string.
 
         Paramaters:
-            sid_string      (string)            SID in string format
+            sid_string      SID in string format
 
         Returns:
-            object          (SecurityIdentifier)
+            SecurityIdentifier
         '''
         if sid_string[0:2] != 'S-':
             raise WConvException(f"from_formatted(... - Specified string '{sid_string}' is not a valid SID.")

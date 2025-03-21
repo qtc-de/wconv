@@ -1,10 +1,12 @@
 #!/usr/bin/python3
 
+from __future__ import annotations
+
 import re
 
-from termcolor import cprint
 from wconv import WConvException
 from wconv.ace import Ace, TRUSTEES
+from wconv.helpers import print_yellow, print_blue
 
 
 SDDL_HEADERS = {
@@ -32,18 +34,18 @@ class Sddl:
     re_acl_type = re.compile('([DS]:(P|AI|AR)*)')
     re_ace = re.compile(r'\((([^\);]*;){5}[^\)]*)\)')
 
-    def __init__(self, owner, group, acl_type, acl_flags, ace_list):
+    def __init__(self, owner: str, group: str, acl_type: str, acl_flags: list[str], ace_list: list[Ace]) -> None:
         '''
         The init function takes the different components of a Sddl and creates an object out of
         them. It should not be called directly. Instead, the helper functions 'from_... should
         be used.
 
         Parameters:
-            owner           (string)            Owner of the corresponding object
-            group           (string)            Group of the corresponding object
-            acl_type        (string)            Only DACL is currently supported
-            acl_flags       (list[string])      ACL flags according to the SDDL specification
-            ace_list        (list[Ace])         List of Ace objects parsed from the sddl
+            owner           Owner of the corresponding object
+            group           Group of the corresponding object
+            acl_type        Only DACL is currently supported
+            acl_flags       ACL flags according to the SDDL specification
+            ace_list        List of Ace objects parsed from the sddl
         '''
         self.owner = owner
         self.group = group
@@ -51,51 +53,49 @@ class Sddl:
         self.acl_flags = acl_flags
         self.ace_list = ace_list
 
-    def pretty_print(self, indent=' ', verbose=False):
+    def pretty_print(self, indent: str = ' ') -> None:
         '''
         Prints the Sddl and the contained Aces in a formatted and colored format. Not
         ideal for a library, however, currently we can live with it.
 
         Parameters:
-            indent          (string)            Spaces after the '[+]' prefix
-            verbose         (boolean)           Decides if ACE flags are printed
+            indent          Spaces after the '[+]' prefix
 
         Returns:
             None
         '''
-        cprint(f'[+]{indent}ACL Type:\t', 'blue', end='')
-        cprint(self.acl_type, 'yellow')
+        print_blue(f'[+]{indent}ACL Type:\t', end='')
+        print_yellow(self.acl_type)
 
-        cprint(f'[+]{indent}Owner:\t', 'blue', end='')
-        cprint(self.owner, 'yellow')
+        print_blue(f'[+]{indent}Owner:\t', end='')
+        print_yellow(self.owner)
 
-        cprint(f'[+]{indent}Group:\t', 'blue', end='')
-        cprint(self.group, 'yellow')
+        print_blue(f'[+]{indent}Group:\t', end='')
+        print_yellow(self.group)
 
-        if verbose:
-            cprint(f'[+]{indent}ACL Flags:', 'blue')
+        print_blue(f'[+]{indent}ACL Flags:')
 
-            for flag in self.acl_flags:
-                cprint('[+]', 'blue', end='')
-                cprint(f'{indent}\t\t+ {flag}', 'yellow')
+        for flag in self.acl_flags:
+            print_blue('[+]', end='')
+            print_yellow(f'{indent}\t\t+ {flag}')
 
-        cprint(f'[+]{indent}ACE List:', 'blue')
-        cprint('[+] ==================================', 'blue')
+        print_blue(f'[+]{indent}ACE List:')
+        print_blue('[+] ==================================')
 
         for ace in self.ace_list:
-            ace.pretty_print(verbose=verbose, indent=indent + ' '*4)
-            cprint('[+] ==================================', 'blue')
+            ace.pretty_print(indent=indent + ' '*4)
+            print_blue('[+] ==================================')
 
-    def get_owner(sddl_string):
+    def get_owner(sddl_string: str) -> str:
         '''
         Returns the owner contained inside a SDDL string or None if no owner
         was specified.
 
         Paramaters:
-            sddl_string         (string)        Portion containing the owner is sufficient
+            sddl_string         Portion containing the owner is sufficient
 
         Returns:
-            owner               (string)        Object owner or None
+            Object owner or None
         '''
         match = Sddl.re_owner.search(sddl_string)
 
@@ -110,16 +110,16 @@ class Sddl:
 
         return owner
 
-    def get_group(sddl_string):
+    def get_group(sddl_string: str) -> str:
         '''
         Returns the group contained inside a SDDL string or None if no group
         was specified.
 
         Paramaters:
-            sddl_string         (string)        Portion containing the group is sufficient
+            sddl_string         Portion containing the group is sufficient
 
         Returns:
-            group               (string)        Object group or None
+            Object group or None
         '''
         match = Sddl.re_group.search(sddl_string)
 
@@ -134,16 +134,16 @@ class Sddl:
 
         return group
 
-    def get_acl_flags(acl_flags_string):
+    def get_acl_flags(acl_flags_string: str) -> str:
         '''
         Takes the SDDL portion behind the 'D:' (acl flags) and returns a list of the corresponding
         contained ACL flags.
 
         Paramaters:
-            acl_flags_strings   (string)        Sring containing the ACL flags ('D:THISONE(')
+            acl_flags_strings   Sring containing the ACL flags ('D:THISONE(')
 
         Returns:
-            acl_flags           (list[string])  List of contained ACL flags
+            List of contained ACL flags
         '''
         acl_flags = []
 
@@ -158,16 +158,16 @@ class Sddl:
 
         return acl_flags
 
-    def get_ace_list(ace_string, perm_type='file'):
+    def get_ace_list(ace_string: str, perm_type: str = 'file'):
         '''
         Takes the SDDL portion that contains the ACEs and returns a list of corresponding ACE objects.
 
         Paramaters:
-            ace_string          (string)        SDDL portion that contains the ACEs
-            perm_type           (string)        Permission type for ACE generation
+            ace_string          SDDL portion that contains the ACEs
+            perm_type           Permission type for ACE generation
 
         Returns:
-            ace_list            (list[ACE])     Corresponding list of ACE objects
+            Corresponding list of ACE objects
         '''
         ace_strings = Sddl.re_ace.findall(ace_string)
         ace_strings = list(map(lambda x: x[0], ace_strings))
@@ -180,20 +180,19 @@ class Sddl:
 
         return ace_list
 
-    def from_string(sddl_string, perm_type='file'):
+    def from_string(sddl_string: str, perm_type: str = 'file') -> Sddl:
         '''
         Parses an SDDL string an creates the corresponding Sddl object out of it.
 
         Parameters:
-            sddl_string         (string)        String that represents the sddl
-            perm_type           (string)        Type of the corresponding object (file, service, ...)
+            sddl_string         String that represents the sddl
+            perm_type           Type of the corresponding object (file, service, ...)
 
         Returns:
-            sddl_object         (Sddl)
+            sddl_object
         '''
         # Split sddl header from ace strings
         try:
-
             header_index = sddl_string.index('(')
             sddl_header_string = sddl_string[:header_index]
             sddl_ace_string = sddl_string[header_index:]
@@ -223,26 +222,26 @@ class Sddl:
 
         return Sddl(owner, group, acl_type, acl_flags, ace_list)
 
-    def add_everyone(sddl_string):
+    def add_everyone(sddl_string: str) -> str:
         '''
         Adds full permissions for everyone on the specified sddl_string.
 
         Parameters:
-            sddl_string         (string)            SDDL string
+            sddl_string         SDDL string
 
         Returns:
-            sddl_string         (string)            SDDL string with full permissions for everyone
+            SDDL string with full permissions for everyone
         '''
         return sddl_string + Ace.ace_everyone
 
-    def add_anonymous(sddl_string):
+    def add_anonymous(sddl_string: str) -> str:
         '''
         Adds full permissions for anonymous on the specified sddl_string.
 
         Parameters:
-            sddl_string         (string)            SDDL string
+            sddl_string         SDDL string
 
         Returns:
-            sddl_string         (string)            SDDL string with full permissions for anonymous
+            SDDL string with full permissions for anonymous
         '''
         return sddl_string + Ace.ace_anonymous

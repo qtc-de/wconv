@@ -17,23 +17,23 @@ function _wconv() {
     uac_flags="$uac_flags DONT_EXPIRE_PASSWORD MNS_LOGON_ACCOUNT SMARTCARD_REQUIRED TRUSTED_FOR_DELEGATION NOT_DELEGATED USE_DES_KEY_ONLY"
     uac_flags="$uac_flags DONT_REQ_PREAUTH PASSWORD_EXPIRED TRUSTED_TO_AUTH_FOR_DELEGATION PARTIAL_SECRETS_ACCOUNT"
     ace_permissions="GA GX GW GR SD RC WD WO CC DC LC SW RP WP DT LO CR FA FR FW FX KA KR KW KE"
-    permission_types="file directory file_map registry service service_control process thread window_station desktop pipe token"
+    permission_types="file directory file_map registry service service_control process thread window_station desktop pipe token ad"
 
     if [[ $cword -eq 1 ]]; then
 
         if [[ $cur == -* ]]; then
             opts="-h --help"
-        else
-            opts="ace sddl sid uac"
-        fi
 
+        else
+            opts="ace sddl sid uac desc"
+        fi
 
     elif [[ ${words[1]} == "ace" ]]; then
 
-        group_one='--from-string -t --toggle -v --verbose'
+        group_one='--from-string -t --toggle'
         group_two='--ace-flags --ace-permissions --ace-types --trustees -h --help'
 
-        if [[ $prev == "-t" ]] || [[ $prev == "--toggle" ]]; then
+        if [[ $prev == "--toggle" ]]; then
             opts="$ace_permissions"
 
         elif [[ $prev == "--type" ]]; then
@@ -42,6 +42,7 @@ function _wconv() {
         elif _comp_contains "$cline" "$group_two"; then
 
             opts="-h --help"
+
             if _comp_contains "$cline" "--ace-permissions"; then
                 opts="$opts --type"
             fi
@@ -53,13 +54,12 @@ function _wconv() {
             opts=$($1 ace --help | _parse_help -)
         fi
 
-
     elif [[ ${words[1]} == "sddl" ]]; then
 
-        group_one="-t --type -v --verbose"
+        group_one="--type"
         group_two="--add-everyone --add-anonymous -h --help"
 
-        if [[ $prev == "-t" ]] || [[ $prev == "--type" ]]; then
+        if [[ $prev == "--type" ]]; then
             opts="$permission_types"
 
         elif _comp_contains "$cline" "$group_two"; then
@@ -72,23 +72,22 @@ function _wconv() {
             opts=$($1 sddl --help | _parse_help -)
         fi
 
-
     elif [[ ${words[1]} == "sid" ]]; then
 
         no_completion="--to-b64 --raw --well-known -h --help"
 
         if _comp_contains "$cline" "$no_completion"; then
             opts="-h --help"
+
         else
             opts=$($1 sid --help | _parse_help -)
         fi
-
 
     elif [[ ${words[1]} == "uac" ]]; then
 
         no_completion="--mapping -h --help"
 
-        if [[ $prev == "-t" ]] || [[ $prev == "--toggle" ]]; then
+        if [[ $prev == "--toggle" ]]; then
             opts="$uac_flags"
 
         elif _comp_contains "$cline" "$no_completion"; then
@@ -98,14 +97,28 @@ function _wconv() {
             opts=$($1 uac --help | _parse_help -)
         fi
 
+    elif [[ ${words[1]} == "desc" ]]; then
+
+        no_completion="--adminsd --hex -h --help"
+
+        if [[ $prev == "--type" ]]; then
+            opts="$permission_types"
+
+        elif [[ $prev == "--sid" ]]; then
+            opts=""
+
+        elif _comp_contains "$cline" "$no_completion"; then
+            opts="-h --help"
+
+        else
+            opts=$($1 desc --help | _parse_help -)
+        fi
 
     else
         opts=$(_parse_help "$1")
     fi
 
-
-    _comp_filter "opts" "-t --toggle"
-    _comp_filter_shorts "opts"
+    _comp_filter "opts" "--toggle"
     
 	mapfile -t COMPREPLY < <(compgen -W "${opts}" -- "${cur}") 
 	return 0
