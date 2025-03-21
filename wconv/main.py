@@ -245,6 +245,7 @@ def main():
                     print_blue('[+]')
 
             if args.adminsd:
+
                 for ace in desc.filter_inherited():
                     ace.pretty_print()
                     print_blue('[+]')
