@@ -144,24 +144,21 @@ The *ACE module* supports operations to work with Windows *ACE* values. Its main
 *ACE* values from binary or SDDL format into human readable form.
 
 ```console
-$ wconv ace --help 
-usage: wconv ace [-h] [--ace-flags] [--ace-types] [--ace-permissions] [--from-string] [--type PERMISSION-TYPE] [-t PERMISSION] [--trustees] [-v] [ACE-VALUE]
+$ wconv ace --help
+usage: wconv ace [-h] [--ace-flags] [--ace-types] [--ace-permissions] [--from-string] [--type type] [--toggle perm] [--trustees] [int]
 
 positional arguments:
-  ACE-VALUE             integer ace value
+  int                integer ace value
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --ace-flags           show available ACE flags
-  --ace-types           show available ACE types
-  --ace-permissions     show permission definitions for requested type
-  --from-string         interpret ace value als ace-string (sddl format)
-  --type PERMISSION-TYPE
-                        permission type (defaul: file)
-  -t PERMISSION, --toggle PERMISSION
-                        toogles specified permission on the ace value
-  --trustees            display available trustees
-  -v, --verbose         verbose output
+options:
+  -h, --help         show this help message and exit
+  --ace-flags        show available ACE flags
+  --ace-types        show available ACE types
+  --ace-permissions  show permission definitions for requested type
+  --from-string      interpret ace value als ace-string (sddl format)
+  --type type        permission type (default: file)
+  --toggle perm      toogles specified permission on the ace value
+  --trustees         display available trustees
 ```
 
 ##### From Integer
@@ -199,7 +196,7 @@ $ wconv ace --from-string '(A;OICINPFA;RPSDWD;;;BU)'
 Toggle the specified permission on the ACE value:
 
 ```console
-$ wconv ace 0x00050010 -t WP -t GA
+$ wconv ace 0x00050010 --toggle WP --toggle GA
 [+] Numeric:	0x10050030
 [+] Permissions:	
 [+] 		+ GENERIC_ALL
@@ -350,18 +347,16 @@ The *SDDL module* supports operations to convert *SDDL strings* into human reada
 
 ```console
 $ wconv sddl --help
-usage: wconv sddl [-h] [--add-everyone] [--add-anonymous] [-t PERMISSION-TYPE] [-v] [SDDL-STRING]
+usage: wconv sddl [-h] [--add-everyone] [--add-anonymous] [--type type] [str]
 
 positional arguments:
-  SDDL-STRING           sddl string
+  str              sddl string
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --add-everyone        add full permissions for everyone
-  --add-anonymous       add full permissions for anonymous
-  -t PERMISSION-TYPE, --type PERMISSION-TYPE
-                        permission type (file, directory, service, ...)
-  -v, --verbose         verbose output
+options:
+  -h, --help       show this help message and exit
+  --add-everyone   add full permissions for everyone
+  --add-anonymous  add full permissions for anonymous
+  --type type      permission type (default: file)
 ```
 
 ##### Parse SDDL
@@ -473,15 +468,15 @@ base64 encoded binary blobs.
 
 ```console
 $ wconv sid --help
-usage: wconv sid [-h] [--to-b64] [--raw] [--well-known] [SID-VALUE]
+usage: wconv sid [-h] [--to-b64] [--raw] [--well-known] [b64]
 
 positional arguments:
-  SID-VALUE     sid value (default format: base64)
+  b64           sid value (default format: base64)
 
-optional arguments:
+options:
   -h, --help    show this help message and exit
-  --to-b64      converts formatted sid to base64
-  --raw         specify sid as raw hex string
+  --to-b64      converts formatted sid (S-1-*) to base64
+  --raw         specify sid as raw hex string (010500...)
   --well-known  display list of well known sids
 ```
 
@@ -545,16 +540,15 @@ the corresponding integer representation again.
 
 ```console
 $ wconv uac --help
-usage: wconv uac [-h] [--mapping] [-t FLAG] [UAC-VALUE]
+usage: wconv uac [-h] [--mapping] [--toggle flag] [int]
 
 positional arguments:
-  UAC-VALUE             binary user account control
+  int            binary user account control value
 
-optional arguments:
-  -h, --help            show this help message and exit
-  --mapping             display UserAccountControl mappings
-  -t FLAG, --toggle FLAG
-                        toogles specified flag on the UserAccountControl value
+options:
+  -h, --help     show this help message and exit
+  --mapping      display UserAccountControl mappings (flags)
+  --toggle flag  toogles specified flag on the UserAccountControl value
 ```
 
 ##### Parse UAC
@@ -575,7 +569,7 @@ $ wconv uac 1114624
 Adds the specified flag(s) to the UAC value:
 
 ```console
-$ wconv uac 1114624 -t DONT_REQ_PREAUTH -t TRUSTED_FOR_DELEGATION 
+$ wconv uac 1114624 --toggle DONT_REQ_PREAUTH --toggle TRUSTED_FOR_DELEGATION 
 [+] UserAccountControl:	5833216 (0x00590200)
 [+]	+ NORMAL_ACCOUNT
 [+]	+ DONT_EXPIRE_PASSWORD
