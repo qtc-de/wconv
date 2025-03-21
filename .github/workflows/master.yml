@@ -1,4 +1,4 @@
-name: master Python CI
+name: master
 
 on:
   push:

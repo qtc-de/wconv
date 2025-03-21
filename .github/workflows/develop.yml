@@ -1,4 +1,4 @@
-name: develop Python CI
+name: develop
 
 on:
   push:
