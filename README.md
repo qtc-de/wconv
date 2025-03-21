@@ -6,8 +6,8 @@
 Windows related formats into human readable form. Additionally, it supports
 simple modifications on Windows related formats.
 
-![](https://github.com/qtc-de/wconv/workflows/master/badge.svg?branch=master)
-![](https://github.com/qtc-de/wconv/workflows/develop/badge.svg?branch=develop)
+![](https://github.com/qtc-de/wconv/workflows/master/badge.svg)
+![](https://github.com/qtc-de/wconv/workflows/develop/badge.svg)
 [![](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/qtc-de/wconv/releases)
 [![](https://img.shields.io/badge/packaging-pypi-blue)](https://pypi.org/project/wconv/)
 ![](https://img.shields.io/badge/python-10%2b-blue)
