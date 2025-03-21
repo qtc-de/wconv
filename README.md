@@ -6,8 +6,12 @@
 Windows related formats into human readable form. Additionally, it supports
 simple modifications on Windows related formats.
 
-![](https://github.com/qtc-de/wconv/workflows/master%20Python%20CI/badge.svg?branch=master)
-![](https://github.com/qtc-de/wconv/workflows/develop%20Python%20CI/badge.svg?branch=develop)
+![](https://github.com/qtc-de/wconv/workflows/master/badge.svg?branch=master)
+![](https://github.com/qtc-de/wconv/workflows/develop/badge.svg?branch=develop)
+[![](https://img.shields.io/badge/version-2.0.0-blue)](https://github.com/qtc-de/wconv/releases)
+[![](https://img.shields.io/badge/packaging-pypi-blue)](https://pypi.org/project/wconv/)
+![](https://img.shields.io/badge/python-10%2b-blue)
+[![](https://img.shields.io/badge/license-GPL%20v3.0-blue)](https://github.com/qtc-de/wconv/blob/master/LICENSE)
 ![example-gif](https://github.com/qtc-de/wconv/raw/master/images/example.gif)
 
 
@@ -48,11 +52,11 @@ simple modifications on Windows related formats.
 
 ----
 
-*wconv* can be build and installed as a *pip* package. The following
-command installs *wconv* for your current user profile:
+*wconv* can be build and installed as a [pip package](https://pypi.org/project/wconv/).
+The recommended way of installing *wconv* is using [pipx](https://github.com/pypa/pipx)
 
 ```console
-$ pip3 install wconv
+$ pipx install wconv
 ```
 
 You can also build *wconv* from source and install it directly by using
@@ -61,16 +65,27 @@ the following commands:
 ```console
 $ git clone https://github.com/qtc-de/wconv
 $ cd wconv
-$ pip3 install -r requirements.txt
-$ python3 setup.py sdist
-$ pip3 install dist/*
+$ pipx install .
 ```
 
+If you want to use *wconv* as a programming library, simply declare it as a dependency
+of your project. To use the library for simple scripts, install via *pipx* as mentioned
+above and use the venv specific interpreter for script execution. The interpreter can
+be found using:
+
+```console
+$ pipx environment --value PIPX_HOME
+/home/user/.local/pipx
+$ /home/user/.local/pipx/venvs/wconv/bin/python3
+Python 3.11.2 (main, Nov 30 2024, 21:22:50) [GCC 12.2.0] on linux
+Type "help", "copyright", "credits" or "license" for more information.
+>>> import wconv
+```
+ 
 Additionally, *wconv* ships a [bash-completion](./wconv/resources/bash_completion.d/wconv) script.
-The completion script is installed automatically, but relies on the [completion-helpers](https://github.com/qtc-de/completion-helpers)
-package. If *completion-helpers* is already installed, autocompletion for *wconv* should
-work after installing the pip package. Otherwise, you may need to copy the completion
-script manually:
+The completion script relies on the [completion-helpers](https://github.com/qtc-de/completion-helpers)
+package. with *completion-helpers* already installed, the following command enables autocompletion
+for *wconv*:
 
 ```console
 $ cp wconv/resources/bash_completion.d/wconv ~/.bash_completion.d
@@ -705,6 +720,6 @@ Windows structures.
 * [Understanding Windows File And Registry Permissions](https://docs.microsoft.com/en-us/archive/msdn-magazine/2008/november/access-control-understanding-windows-file-and-registry-permissions)
 * [How do I convert a SID between binary and string forms](https://devblogs.microsoft.com/oldnewthing/20040315-00/?p=40253)
 * [How to use the UserAccountControl flags](https://support.microsoft.com/en-us/help/305144/how-to-use-useraccountcontrol-to-manipulate-user-account-properties)
+* [Parsing-the-NtSecurityDescriptor](https://www.chadsikorra.com/blog/Parsing-the-NtSecurityDescriptor)
+* [ldaptools](https://github.com/ldaptools/ldaptools)
 * [sddl.py](https://github.com/tojo2k/pysddl/blob/master/sddl.py/sddl.py)
-
-*Copyright 2020, Tobias Neitzel and the wconv contributors.*
