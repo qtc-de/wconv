@@ -45,3 +45,28 @@ class Acl:
             pos += ace_length
 
         return Acl(revision, ace_count, ace_list)
+
+    def from_sddl(sddl_string: str, perm_type: str = 'file') -> Acl:
+        '''
+        Parse an Acl from the ACL portion of an sddl string.
+
+        Parameters:
+            sddl_string     ACL portion of an sddl string
+            perm_type       Object type the descriptor applies to (file, service, ...)
+
+        Returns:
+            Acl
+        '''
+        split = sddl_string.split('(')
+
+        ace_list = []
+        ace_count = len(slpit)
+
+        for item in split:
+
+            item = item.strip('(')
+            ace = Ace.from_sddl(item, perm_type)
+
+            ace_list.append(ace)
+
+        return Acl(revision, ace_count, ace_list)

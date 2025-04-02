@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import struct
+import binascii
+import wconv.sddl
 
 from uuid import UUID
 
@@ -36,30 +38,6 @@ ACE_TYPES = {
 }
 
 
-ACE_SDDL = {
-    'A': 0x00,
-    'D': 0x01,
-    'AU': 0x02,
-    'AL': 0x03,
-    'CA': 0x04,
-    'OA': 0x05,
-    'OD': 0x06,
-    'OU': 0x07,
-    'OL': 0x08,
-    'XA': 0x09,
-    'XD': 0x0A,
-    'ZA': 0x0B,
-    'ZD': 0x0C,
-    'XU': 0x0D,
-    'XL': 0x0E,
-    'ZU': 0x0F,
-    'ZL': 0x10,
-    'ML': 0x11,
-    'RA': 0x12,
-    'SP': 0x13,
-}
-
-
 ACE_FLAGS = {
     0x01: 'OBJECT_INHERIT',
     0x02: 'CONTAINER_INHERIT',
@@ -72,371 +50,213 @@ ACE_FLAGS = {
 }
 
 
-ACE_FLAGS_SDDL = {
-    'OI': 0x01,
-    'CI': 0x02,
-    'NP': 0x04,
-    'IO': 0x08,
-    'ID': 0x10,
-    'CR': 0x20,
-    'SA': 0x40,
-    'FA': 0x80,
-}
-
-
 GENERIC_PERMISSIONS = {
     # generic permissions
-    'GA': 'GENERIC_ALL',
-    'GX': 'GENERIC_EXECUTE',
-    'GW': 'GENERIC_WRITE',
-    'GR': 'GENERIC_READ',
+    0x10000000: 'GENERIC_ALL',
+    0x20000000: 'GENERIC_EXECUTE',
+    0x40000000: 'GENERIC_WRITE',
+    0x80000000: 'GENERIC_READ',
 
     # standard permissions
-    'SD': 'DELETE',
-    'RC': 'READ_CONTROL',
-    'WD': 'WRITE_DAC',
-    'WO': 'WRITE_OWNER',
+    0x00010000: 'DELETE',
+    0x00020000: 'READ_CONTROL',
+    0x00040000: 'WRITE_DAC',
+    0x00080000: 'WRITE_OWNER',
 
     # Non ACE / SDDL
-    '0x100000': 'SYNCHRONIZE',
-    '0x1000000': 'ACCESS_SYSTEM_SECURITY',
-    '0x2000000': 'MAXIMUM_ALLOWED',
+    0x00100000: 'SYNCHRONIZE',
+    0x01000000: 'ACCESS_SYSTEM_SECURITY',
+    0x02000000: 'MAXIMUM_ALLOWED',
 }
 
 
 PERMISSIONS_FILE = {
-    'CC': 'READ',
-    'DC': 'WRITE',
-    'LC': 'APPEND',
-    'SW': 'READ_EXTENDED_ATTRIBUTES',
-    'RP': 'WRITE_EXTENDED_ATTRIBUTES',
-    'WP': 'EXECUTE',
-    'DT': 'MEANINGLESS',
-    'LO': 'READ_ATTRIBUTES',
-    'CR': 'WRITE_ATTRIBUTES'
+    0x00000001: 'READ',
+    0x00000002: 'WRITE',
+    0x00000004: 'APPEND',
+    0x00000008: 'READ_EXTENDED_ATTRIBUTES',
+    0x00000010: 'WRITE_EXTENDED_ATTRIBUTES',
+    0x00000020: 'EXECUTE',
+    0x00000040: 'MEANINGLESS',
+    0x00000080: 'READ_ATTRIBUTES',
+    0x00000100: 'WRITE_ATTRIBUTES'
 }
 
 
 PERMISSIONS_DIRECTORY = {
-    'CC': 'LIST',
-    'DC': 'ADD_FILE',
-    'LC': 'ADD_SUB_DIR',
-    'SW': 'READ_EXTENDED_ATTRIBUTES',
-    'RP': 'WRITE_EXTENDED_ATTRIBUTES',
-    'WP': 'TRAVERSE',
-    'DT': 'DELETE_CHILD',
-    'LO': 'READ_ATTRIBUTES',
-    'CR': 'WRITE_ATTRIBUTES'
+    0x00000001: 'LIST',
+    0x00000002: 'ADD_FILE',
+    0x00000004: 'ADD_SUB_DIR',
+    0x00000008: 'READ_EXTENDED_ATTRIBUTES',
+    0x00000010: 'WRITE_EXTENDED_ATTRIBUTES',
+    0x00000020: 'TRAVERSE',
+    0x00000040: 'DELETE_CHILD',
+    0x00000080: 'READ_ATTRIBUTES',
+    0x00000100: 'WRITE_ATTRIBUTES'
 }
 
 
 PERMISSIONS_FILE_MAP = {
-    'CC': 'FILE_MAP_COPY',
-    'DC': 'FILE_MAP_WRITE',
-    'LC': 'FILE_MAP_READ',
-    'SW': 'FILE_MAP_EXECUTE',
-    'RP': 'FILE_MAP_EXTEND_MAX_SIZE',
-    'WP': 'SECTION_MAP_EXECUTE_EXPLICIT'
+    0x00000001: 'FILE_MAP_COPY',
+    0x00000002: 'FILE_MAP_WRITE',
+    0x00000004: 'FILE_MAP_READ',
+    0x00000008: 'FILE_MAP_EXECUTE',
+    0x00000010: 'FILE_MAP_EXTEND_MAX_SIZE',
+    0x00000020: 'SECTION_MAP_EXECUTE_EXPLICIT'
 }
 
 
 PERMISSIONS_REGISTRY = {
-    'CC': 'KEY_QUERY_VALUE',
-    'DC': 'KEY_SET_VALUE',
-    'LC': 'KEY_CREATE_SUB_KEY',
-    'SW': 'KEY_ENUMERATE_SUB_KEYS',
-    'RP': 'KEY_NOTIFY',
-    'WP': 'KEY_CREATE_LINK'
+    0x00000001: 'KEY_QUERY_VALUE',
+    0x00000002: 'KEY_SET_VALUE',
+    0x00000004: 'KEY_CREATE_SUB_KEY',
+    0x00000008: 'KEY_ENUMERATE_SUB_KEYS',
+    0x00000010: 'KEY_NOTIFY',
+    0x00000020: 'KEY_CREATE_LINK'
 }
 
 
 PERMISSIONS_SERVICE_CONTROL = {
-    'CC': 'CONNECT',
-    'DC': 'CREATE_SERVICE',
-    'LC': 'ENUM_SERVICE',
-    'SW': 'LOCK',
-    'RP': 'QUERY_LOCK',
-    'WP': 'MODIFY_BOOT_CFG'
+    0x00000001: 'CONNECT',
+    0x00000002: 'CREATE_SERVICE',
+    0x00000004: 'ENUM_SERVICE',
+    0x00000008: 'LOCK',
+    0x00000010: 'QUERY_LOCK',
+    0x00000020: 'MODIFY_BOOT_CFG'
 }
 
 
 PERMISSIONS_SERVICE = {
-    'CC': 'QUERY_CONFIG',
-    'DC': 'CHANGE_CONFIG',
-    'LC': 'QUERY_STATISTIC',
-    'SW': 'ENUM_DEPENDENCIES',
-    'RP': 'START',
-    'WP': 'STOP',
-    'DT': 'PAUSE',
-    'LO': 'INTERROGATE',
-    'CR': 'USER_DEFINIED'
+    0x00000001: 'QUERY_CONFIG',
+    0x00000002: 'CHANGE_CONFIG',
+    0x00000004: 'QUERY_STATISTIC',
+    0x00000008: 'ENUM_DEPENDENCIES',
+    0x00000010: 'START',
+    0x00000020: 'STOP',
+    0x00000040: 'PAUSE',
+    0x00000080: 'INTERROGATE',
+    0x00000100: 'USER_DEFINIED'
 }
 
 
 PERMISSIONS_PROCESS = {
-    'CC': 'TERMINATE',
-    'DC': 'CREATE_THREAD',
-    'LC': 'SET',
-    'SW': 'VM_OPERATE',
-    'RP': 'VM_READ',
-    'WP': 'VM_WRITE',
-    'DT': 'DUP_HANDLE',
-    'LO': 'CREATE_PROCESS',
-    'CR': 'SET_QUOTA',
-    '0x200': 'SET_INFORMATION',
-    '0x400': 'QUERY_INFORMATION',
-    '0x800': 'SUSPEND_RESUME',
-    '0x1000': 'QUERY_LIMITED_INFORMATION',
-    '0x2000': 'SET_LIMITED_INFORMATION',
+    0x00000001: 'TERMINATE',
+    0x00000002: 'CREATE_THREAD',
+    0x00000004: 'SET',
+    0x00000008: 'VM_OPERATE',
+    0x00000010: 'VM_READ',
+    0x00000020: 'VM_WRITE',
+    0x00000040: 'DUP_HANDLE',
+    0x00000080: 'CREATE_PROCESS',
+    0x00000100: 'SET_QUOTA',
+    0x00000200: 'SET_INFORMATION',
+    0x00000400: 'QUERY_INFORMATION',
+    0x00000800: 'SUSPEND_RESUME',
+    0x00001000: 'QUERY_LIMITED_INFORMATION',
+    0x00002000: 'SET_LIMITED_INFORMATION',
 }
 
 
 PERMISSIONS_THREAD = {
-    'CC': 'TERMINATE',
-    'DC': 'SUSPEND',
-    'LC': 'ALERT',
-    'SW': 'GET_CONTEXT',
-    'RP': 'SET_CONTEXT',
-    'WP': 'SET_INFO',
-    'DT': 'QUERY_INFO',
-    'LO': 'SET_TOKEN',
-    'CR': 'IMPERSONATE',
-    '0x200': 'THREAD_DIRECT_IMPERSONATION',
-    '0x400': 'THREAD_SET_LIMITED_INFORMATION',
-    '0x800': 'THREAD_QUERY_LIMITED_INFORMATION',
-    '0x1000': 'THREAD_RESUME',
+    0x00000001: 'TERMINATE',
+    0x00000002: 'SUSPEND',
+    0x00000004: 'ALERT',
+    0x00000008: 'GET_CONTEXT',
+    0x00000010: 'SET_CONTEXT',
+    0x00000020: 'SET_INFO',
+    0x00000040: 'QUERY_INFO',
+    0x00000080: 'SET_TOKEN',
+    0x00000100: 'IMPERSONATE',
+    0x00000200: 'THREAD_DIRECT_IMPERSONATION',
+    0x00000400: 'THREAD_SET_LIMITED_INFORMATION',
+    0x00000800: 'THREAD_QUERY_LIMITED_INFORMATION',
+    0x00001000: 'THREAD_RESUME',
 }
 
 
 PERMISSIONS_WINDOW_STATION = {
-    'CC': 'ENUM_DESKTOPS',
-    'DC': 'READ_ATTRIBUTE',
-    'LC': 'CLIPBOARD',
-    'SW': 'CREATE_DESKTOP',
-    'RP': 'WRITE_ATTRIBUTE',
-    'WP': 'GLOBAL_ATOMS',
-    'DT': 'EXIT_WINDOWS',
-    'LO': '',
-    'CR': 'ENUM_WINSTA'
+    0x00000001: 'ENUM_DESKTOPS',
+    0x00000002: 'READ_ATTRIBUTE',
+    0x00000004: 'CLIPBOARD',
+    0x00000008: 'CREATE_DESKTOP',
+    0x00000010: 'WRITE_ATTRIBUTE',
+    0x00000020: 'GLOBAL_ATOMS',
+    0x00000040: 'EXIT_WINDOWS',
+    0x00000080: '',
+    0x00000100: 'ENUM_WINSTA'
 }
 
 
 PERMISSIONS_DESKTOP = {
-    'CC': 'READ_OBJECTS',
-    'DC': 'CREATE_WINDOW',
-    'LC': 'CREATE_MENU',
-    'SW': 'HOOK_CONTROL',
-    'RP': 'JOURNAL_RECORD',
-    'WP': 'JOURNAL_PLAYBACK',
-    'DT': 'ENUM',
-    'LO': 'WRITE_OBJECTS',
-    'CR': 'SWITCH_DESKTOP'
+    0x00000001: 'READ_OBJECTS',
+    0x00000002: 'CREATE_WINDOW',
+    0x00000004: 'CREATE_MENU',
+    0x00000008: 'HOOK_CONTROL',
+    0x00000010: 'JOURNAL_RECORD',
+    0x00000020: 'JOURNAL_PLAYBACK',
+    0x00000040: 'ENUM',
+    0x00000080: 'WRITE_OBJECTS',
+    0x00000100: 'SWITCH_DESKTOP'
 }
 
 
 PERMISSIONS_PIPE = {
-    'CC': 'READ',
-    'DC': 'WRITE',
-    'LC': 'CREATE_INSTANCE',
-    'SW': 'READ_EXTENDED_ATTRIBUTES',
-    'RP': 'WRITE_EXTENDEN_ATTRIBUTES',
-    'WP': 'EXECUTE',
-    'DT': 'DELETE',
-    'LO': 'READ_ATTRIBUTES',
-    'CR': 'WRITE_ATTRIBUTES'
+    0x00000001: 'READ',
+    0x00000002: 'WRITE',
+    0x00000004: 'CREATE_INSTANCE',
+    0x00000008: 'READ_EXTENDED_ATTRIBUTES',
+    0x00000010: 'WRITE_EXTENDEN_ATTRIBUTES',
+    0x00000020: 'EXECUTE',
+    0x00000040: 'DELETE',
+    0x00000080: 'READ_ATTRIBUTES',
+    0x00000100: 'WRITE_ATTRIBUTES'
 }
 
 
 PERMISSIONS_TOKEN = {
-    'CC': 'ASSIGN_PRIMARY',
-    'DC': 'DUPLICATE',
-    'LC': 'IMPERSONATE',
-    'SW': 'QUERY',
-    'RP': 'QUERY_SOURCE',
-    'WP': 'ADJUST_PRIVELEGES',
-    'DT': 'ADJUST_GROUPS',
-    'LO': 'ADJUST_DEFAULT',
-    'CR': 'ADJUST_SESSION'
+    0x00000001: 'ASSIGN_PRIMARY',
+    0x00000002: 'DUPLICATE',
+    0x00000004: 'IMPERSONATE',
+    0x00000008: 'QUERY',
+    0x00000010: 'QUERY_SOURCE',
+    0x00000020: 'ADJUST_PRIVELEGES',
+    0x00000040: 'ADJUST_GROUPS',
+    0x00000080: 'ADJUST_DEFAULT',
+    0x00000100: 'ADJUST_SESSION'
 }
 
 
 PERMISSIONS_AD = {
-    'RP': 'DS_READ_PROP',
-    'WP': 'DS_WRITE_PROP',
-    'CC': 'DS_CREATE_CHILD',
-    'DC': 'DS_DELETE_CHILD',
-    'LC': 'ACTRL_DS_LIST',
-    'SW': 'DS_SELF',
-    'LO': 'DS_LIST_OBJECT',
-    'DT': 'DS_DELETE_TREE',
-    'CR': 'DS_CONTROL_ACCESS',
+    0x00000001: 'DS_CREATE_CHILD',
+    0x00000002: 'DS_DELETE_CHILD',
+    0x00000004: 'ACTRL_DS_LIST',
+    0x00000008: 'DS_SELF',
+    0x00000010: 'DS_READ_PROP',
+    0x00000020: 'DS_WRITE_PROP',
+    0x00000040: 'DS_DELETE_TREE',
+    0x00000080: 'DS_LIST_OBJECT',
+    0x00000100: 'DS_CONTROL_ACCESS',
 }
-
-
-GROUPED_PERMISSIONS = {
-    'FA': 'READ_CONTROL,DELETE,WRITE_DAC,WRITE_OWNER,SYNCHRONIZE,READ,WRITE,APPEND,READ_EXTENDED_ATTRIBUTES,\
-WRITE_EXTENDED_ATTRIBUTES,EXECUTE,MEANINGLESS,READ_ATTRIBUTES,WRITE_ATTRIBUTES',
-    'FR': 'READ_CONTROL,READ,READ_ATTRIBUTES,READ_EXTENDED_ATTRIBUES,SYNCHRONIZE',
-    'FW': 'READ_CONTROL,WRITE,WRITE_ATTRIBUTES,WRITE_EXTENDED_ATTRIBUES,APPEND,SYNCHRONIZE',
-    'FX': 'READ_CONTROL,READ_ATTRIBUTES,EXECUTE,SYNCHRONIZE',
-    'KA': 'READ_CONTROL,DELETE,WRITE_DAC,WRITE_OWNER,QUERY,SET,CREATE_SUB_KEY,ENUM_SUB_KEYS,NOTIFY,CREATE_LINK',
-    'KR': 'READ_CONTROL,QUERY,ENUM_SUB_KEYS,NOTIFY',
-    'KW': 'READ_CONTROL,SET,CREATE_SUB_KEY',
-    'KE': 'READ_CONTROL,QUERY,ENUM_SUB_KEYS,NOTIFY'
-}
-
-
-TRUSTEES = {
-    'AN': 'Anonymous',
-    'AO': 'Account Operators',
-    'AU': 'Authenticated Users',
-    'BA': 'Administrators',
-    'BG': 'Guests',
-    'BO': 'Backup Operators',
-    'BU': 'Users',
-    'CA': 'Certificate Publishers',
-    'CD': 'Certificate Services DCOM Access',
-    'CG': 'Creator Group',
-    'CO': 'Creator Owner',
-    'DA': 'Domain Admins',
-    'DC': 'Domain Computers',
-    'DD': 'Domain Controllers',
-    'DG': 'Domain Guests',
-    'DU': 'Domain Users',
-    'EA': 'Enterprise Admins',
-    'ED': 'Enterprise Domain Controllers',
-    'RO': 'Enterprise Read-Only Domain Controllers',
-    'PA': 'Group Policy Admins',
-    'IU': 'Interactive Users',
-    'LA': 'Local Administrator',
-    'LG': 'Local Guest',
-    'LS': 'Local Service',
-    'SY': 'Local System',
-    'NU': 'Network',
-    'LW': 'Low Integrity',
-    'ME': 'Medium Integrity',
-    'HI': 'High Integrity',
-    'SI': 'System Integrity',
-    'NO': 'Network Configuration Operators',
-    'NS': 'Network Service',
-    'PO': 'Printer Operators',
-    'PS': 'Self',
-    'PU': 'Power Users',
-    'RS': 'RAS Servers',
-    'RD': 'Remote Desktop Users',
-    'RE': 'Replicator',
-    'RC': 'Restricted Code',
-    'RU': 'Pre-Win2k Compatibility Access',
-    'SA': 'Schema Administrators',
-    'SO': 'Server Operators',
-    'SU': 'Service',
-    'WD': 'Everyone',
-    'WR': 'Write restricted Code',
-}
-
-
-ACCESS_MASK_HEX = dict([
-    # Generic Access Rights
-    (0x10000000, 'GA'),
-    (0x20000000, 'GX'),
-    (0x40000000, 'GW'),
-    (0x80000000, 'GR'),
-    # Non Sddl / ACE
-    (0x00000200, '0x200'),
-    (0x00000400, '0x400'),
-    (0x00000800, '0x800'),
-    (0x00001000, '0x1000'),
-    (0x00002000, '0x2000'),
-    (0x00100000, '0x100000'),
-    (0x01000000, '0x1000000'),
-    (0x02000000, '0x2000000'),
-    # Standard Access Rights
-    (0x00000001, 'CC'),
-    (0x00000002, 'DC'),
-    (0x00000004, 'LC'),
-    (0x00000008, 'SW'),
-    (0x00000010, 'RP'),
-    (0x00000020, 'WP'),
-    (0x00000040, 'DT'),
-    (0x00000080, 'LO'),
-    (0x00000100, 'CR'),
-    (0x00010000, 'SD'),
-    (0x00020000, 'RC'),
-    (0x00040000, 'WD'),
-    (0x00080000, 'WO'),
-    # File Access Rights
-    (0x000f01ff, 'FA'),
-    (0x00020089, 'FR'),
-    (0x00020116, 'FW'),
-    (0x000200a0, 'FX'),
-    # Registry Access Rights
-    (0x000f003f, 'KA'),
-    (0x00020019, 'KR'),
-    (0x00020006, 'KW'),
-    (0x00020019, 'KE')
-])
-
-
-ACCESS_MASK_HEX_REVERSE = dict([ ('GA', 0x10000000),
-    # Generic Access Rights
-    ('GA', 0x10000000),
-    ('GX', 0x20000000),
-    ('GW', 0x40000000),
-    ('GR', 0x80000000),
-    # Non Sddl Access Rights
-    ('0x200', 0x00000200),
-    ('0x400', 0x00000400),
-    ('0x800', 0x00000800),
-    ('0x1000', 0x00001000),
-    ('0x2000', 0x00002000),
-    ('0x100000', 0x00100000),
-    ('0x1000000', 0x01000000),
-    ('0x2000000', 0x02000000),
-    # Standard Access Rights
-    ('CC', 0x00000001),
-    ('DC', 0x00000002),
-    ('LC', 0x00000004),
-    ('SW', 0x00000008),
-    ('RP', 0x00000010),
-    ('WP', 0x00000020),
-    ('DT', 0x00000040),
-    ('LO', 0x00000080),
-    ('CR', 0x00000100),
-    ('SD', 0x00010000),
-    ('RC', 0x00020000),
-    ('WD', 0x00040000),
-    ('WO', 0x00080000),
-    # File Access Rights
-    ('FA', 0x000f01ff),
-    ('FR', 0x00020089),
-    ('FW', 0x00020116),
-    ('FX', 0x000200a0),
-    # Registry Access Rights
-    ('KA', 0x000f003f),
-    ('KR', 0x00020019),
-    ('KW', 0x00020006),
-    ('KE', 0x00020019)
-])
 
 
 PERM_TYPE_MAPPING = {
-    'ad':               dict(GENERIC_PERMISSIONS, **PERMISSIONS_AD),
-    'file':             dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE),
-    'directory':        dict(GENERIC_PERMISSIONS, **PERMISSIONS_DIRECTORY),
-    'file_map':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE_MAP),
-    'registry':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_REGISTRY),
-    'service':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE),
-    'service_control':  dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE_CONTROL),
-    'process':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_PROCESS),
-    'thread':           dict(GENERIC_PERMISSIONS, **PERMISSIONS_THREAD),
-    'window_station':   dict(GENERIC_PERMISSIONS, **PERMISSIONS_WINDOW_STATION),
-    'desktop':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_DESKTOP),
-    'pipe':             dict(GENERIC_PERMISSIONS, **PERMISSIONS_PIPE),
-    'token':            dict(GENERIC_PERMISSIONS, **PERMISSIONS_TOKEN),
+    'ad':               GENERIC_PERMISSIONS | PERMISSIONS_AD,
+    'file':             GENERIC_PERMISSIONS | PERMISSIONS_FILE,
+    'directory':        GENERIC_PERMISSIONS | PERMISSIONS_DIRECTORY,
+    'file_map':         GENERIC_PERMISSIONS | PERMISSIONS_FILE_MAP,
+    'registry':         GENERIC_PERMISSIONS | PERMISSIONS_REGISTRY,
+    'service':          GENERIC_PERMISSIONS | PERMISSIONS_SERVICE,
+    'service_control':  GENERIC_PERMISSIONS | PERMISSIONS_SERVICE_CONTROL,
+    'process':          GENERIC_PERMISSIONS | PERMISSIONS_PROCESS,
+    'thread':           GENERIC_PERMISSIONS | PERMISSIONS_THREAD,
+    'window_station':   GENERIC_PERMISSIONS | PERMISSIONS_WINDOW_STATION,
+    'desktop':          GENERIC_PERMISSIONS | PERMISSIONS_DESKTOP,
+    'pipe':             GENERIC_PERMISSIONS | PERMISSIONS_PIPE,
+    'token':            GENERIC_PERMISSIONS | PERMISSIONS_TOKEN,
 }
 
 
-def get_permission_dict(permission_type: str) -> dict:
+def get_permission_dict(permission_type: str) -> dict[int, str]:
     '''
     The meaning of permission shortnames like 'CC' change depending on the resource
     they are assigned to. This function returns the corresponding dictionary for
@@ -460,8 +280,6 @@ class Ace:
     '''
     The Ace class represents a single ACE entry inside a SDDL string.
     '''
-    ace_everyone = '(A;;GAGRGWGXRCSDWDWOSSCCDCLCSWRPWPDTLOCR;;;WD)'
-    ace_anonymous = '(A;;GAGRGWGXRCSDWDWOSSCCDCLCSWRPWPDTLOCR;;;AN)'
 
     def __init__(self, ace_type: int, ace_flags: list[str], permissions: list[str], object_type: str,
                  inherited_object_type: str, trustee: str, numeric: int) -> None:
@@ -470,8 +288,8 @@ class Ace:
 
         Parameters:
             ace_type        integer that specifies the ACE type (see ACE_TYPES)
-            ace_flags       ace_flags according to the sddl specifications
-            permissions     permissions defined inside the ACE
+            ace_flags       ace_flags according to the ACE specifications
+            permissions     permissions defined inside the ACE as strings
             object_type     object_type according to the sddl specifications
             i_object_type   inherited_object_type according to the sddl specifications
             trustee         trustee the ACE applies to
@@ -566,108 +384,31 @@ class Ace:
                 print_blue('[+]', end='')
                 print_yellow(f'{indent}\t\t+ {perm}')
 
-    def clear_parentheses(ace_string: str) -> str:
+    def toggle_permission(self, permissions: list[str], perm_type: str = 'file') -> None:
         '''
-        Removes the opening and closing parantheses from an ACE string (if present).
+        Toggles the specified permissions for this ACE.
 
-        Paramaters:
-            ace_string      ACE string to operate on
+        Parameters:
+            permissions     List of permission to toggle (GA, GR, GW, GE, CC, ...)
+            perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
-            ACE string without parentheses
+            None
         '''
-        if ace_string[0] == '(':
-            ace_string = ace_string[1:]
-
-        if ace_string[-1] == ')':
-            ace_string = ace_string[:-1]
-
-        return ace_string
-
-    def get_ace_flags(ace_flag_string: str) -> list[str]:
-        '''
-        Parses the flag-portion of an ACE string and returns a list of the corresponding
-        ACE flags.
-
-        Paramaters:
-            ace_flag_string String containing the ACE flags
-
-        Returns:
-            List containing the parsed ACE flags
-        '''
-        ace_flags = []
-
-        for ctr in range(0, len(ace_flag_string), 2):
-
-            try:
-                ace_flag = ace_flag_string[ctr:ctr+2]
-                ace_flag = ACE_FLAGS[ACE_FLAGS_SDDL[ace_flag]]
-                ace_flags.append(ace_flag)
-
-            except KeyError:
-                raise WConvException(f"get_ace_flags(... - Unknown ACE flag '{ace_flag}'.")
-
-        return ace_flags
-
-    def get_ace_permissions(ace_permission_string: str, perm_type: str = 'file') -> list[str]:
-        '''
-        Takes the ACE portion containing the permission and returns a list of the corresponding parsed
-        permissions.
-
-        Paramaters:
-            ace_permission_string   String containing the ACE permissions
-            perm_type               Permission type (file, service, ...)
-
-        Returns:
-            List of corresponding permissions
-        '''
-        permissions = []
         perm_dict = get_permission_dict(perm_type)
 
-        for ctr in range(0, len(ace_permission_string), 2):
-
-            permission = ace_permission_string[ctr:ctr+2]
+        for permission in permissions:
 
             try:
+                hex_value = wconv.sddl.ACCESS_MASK_HEX[permission]
 
-                if permission in GROUPED_PERMISSIONS:
-                    permission = GROUPED_PERMISSIONS[permission]
-                    permission = permission.split(",")
-                    permissions += permission
-                else:
-                    permission = perm_dict[permission]
-                    permissions.append(permission)
+                self.numeric = self.numeric ^ hex_value
+                self.permissions.append(perm_dict[hex_value])
 
             except KeyError:
-                raise WConvException(f"from_string(... - Unknown permission name '{permission}'.")
+                raise WConvException(f'Ace.toggle_permission(... - Unknown permission name: {permission}')
 
-        return permissions
-
-    def get_ace_numeric(ace_permission_string: str) -> int:
-        '''
-        Takes the ACE portion containing the permission and returns the corresponding integer value.
-
-        Paramaters:
-            ace_permission_string   String containing the ACE permissions
-
-        Returns:
-            Corresponding integer value
-        '''
-        ace_int = 0
-
-        for ctr in range(0, len(ace_permission_string), 2):
-
-            permission = ace_permission_string[ctr:ctr+2]
-
-            try:
-                ace_int += ACCESS_MASK_HEX_REVERSE[permission]
-
-            except KeyError:
-                raise WConvException(f"from_string(... - Unknown permission name '{permission}'.")
-
-        return ace_int
-
-    def from_string(ace_string: str, perm_type: str = 'file') -> Ace:
+    def from_sddl(ace_string: str, perm_type: str = 'file') -> Ace:
         '''
         Parses an ace from a string in SDDL representation (e.g. A;OICI;FA;;;BA).
 
@@ -678,24 +419,18 @@ class Ace:
         Returns:
             ace_object
         '''
-        ace_string = Ace.clear_parentheses(ace_string)
-        ace_split = ace_string.split(';')
-
-        if len(ace_split) != 6:
-            raise WConvException(f"from_string(... - Specified value '{ace_string}' is not a valid ACE string.")
 
         try:
-            ace_type = ACE_SDDL[ace_split[0]]
+            ace_string = wconv.helpers.clear_parentheses(ace_string)
+            ace_type, ace_flags, perms, object_type, inherited_object_type, trustee = ace_string.split(';', 5)
 
         except KeyError:
-            raise WConvException(f"from_string(... - Unknown ACE type '{ace_split[0]}'.")
+            raise WConvException(f'Ace.from_sddl(... - Invalid sddl input: {ace_string}')
 
-        ace_flags = Ace.get_ace_flags(ace_split[1])
-        permissions = Ace.get_ace_permissions(ace_split[2], perm_type)
-        ace_int = Ace.get_ace_numeric(ace_split[2])
-
-        object_type = ace_split[3]
-        inherited_object_type = ace_split[4]
+        ace_type = wconv.sddl.SDDL_ACE_TYPES[ace_type]
+        ace_flags = wconv.sddl.map_ace_flags(ace_flags)
+        permissions = wconv.sddl.get_ace_permissions(perms, perm_type)
+        ace_int = wconv.sddl.get_ace_numeric(perms)
 
         if object_type:
             object_type = ObjectType(object_type)
@@ -703,9 +438,8 @@ class Ace:
         if inherited_object_type:
             inherited_object_type = ObjectType(inherited_object_type)
 
-        trustee = ace_split[5]
-        if trustee in TRUSTEES:
-            trustee = TRUSTEES[trustee]
+        if trustee in wconv.sddl.TRUSTEES:
+            trustee = wconv.sddl.TRUSTEES[trustee]
 
         return Ace(ace_type, ace_flags, permissions, object_type, inherited_object_type, trustee, ace_int)
 
@@ -725,13 +459,12 @@ class Ace:
         perm_dict = get_permission_dict(perm_type)
         permissions = []
 
-        for key, value in ACCESS_MASK_HEX.items():
+        for key, value in perm_dict.items():
 
             if key & ace_int:
 
                 try:
-                    permission = perm_dict[value]
-                    permissions.append(permission)
+                    permissions.append(value)
 
                 except KeyError:
                     # Ignore matches on grouped permissions like FA, FR, FW...
@@ -796,26 +529,20 @@ class Ace:
 
         return Ace(ace_type, ace_flag_list, permissions, object_type, object_type_inherited, trustee, ace_perms)
 
-    def toggle_permission(integer: str | int, permissions: list[str]) -> str:
+    def from_hex(hex_str: str, perm_type: str = 'file') -> Ace:
         '''
-        Takes an ace in integer format and toggles the specified permissions on it.
+        Parses an ACE from a hex string.
 
         Parameters:
-            integer         Integer value as string (hex also allowed)
-            permissions     List of permission to toggle (GA, GR, GW, GE, CC, ...)
+            hex_string      hex string representing an ACE
+            perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
-            Resulting ace value as integer in hex format
+            ace_object
         '''
-        ace_int = get_int(integer)
+        try:
+            data = binascii.unhexlify(hex_str)
+            return Ace.from_bytes(data, perm_type)
 
-        for permission in permissions:
-
-            try:
-                hex_value = ACCESS_MASK_HEX_REVERSE[permission]
-                ace_int = ace_int ^ hex_value
-
-            except KeyError:
-                raise WConvException(f"toggle_permission(... - Unknown permission name '{permission}'")
-
-        return "0x{:08x}".format(ace_int)
+        except binascii.Error:
+            raise WConvException(f'Ace.from_hex(... - Invalid hex string: {hex_string}')

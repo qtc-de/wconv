@@ -5,6 +5,7 @@ from __future__ import annotations
 import struct
 import base64
 import binascii
+import wconv.sddl
 
 from wconv import WConvException
 from wconv.acl import Acl
@@ -142,3 +143,24 @@ class SecurityDescriptor:
             dacl = Acl.from_bytes(byte_data[dacl_offset:], perm_type)
 
         return SecurityDescriptor(owner_sid, group_sid, sacl, dacl)
+
+    def from_sddl(sddl_string: str, perm_type: str = 'file') -> SecurityDescriptor:
+        '''
+        Parses an SecurityDescriptor from a hex string.
+
+        Parameters:
+            sddl_string     Securitydescriptor string in sddl format
+            perm_type       Object type the descriptor applies to (file, service, ...)
+
+        Returns:
+            SecurityDescriptor
+        '''
+        owner_sid = wconv.sddl.get_owner(sddl_string)
+        group_sid = wconv.sddl.get_group(sddl_string)
+
+        sddl_type = wconv.sddl.get_type(sddl_string)
+
+        if sddl_type == 'DACL':
+            dacl = Acl.from_sddl(wconv.sddl.get_dacl(ssdl_string))
+
+        return SecurityDescriptor(owner_sid, group_sid, None, dacl)

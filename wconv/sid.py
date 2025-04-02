@@ -310,6 +310,23 @@ class SecurityIdentifier:
 
         return SecurityIdentifier(binary)
 
+    def from_well_known(trustee: str) -> SecurityIdentifier:
+        '''
+        Attempts to create a SecurityIdentifier from a well known trustee name.
+
+        Paramaters:
+            trustee         name of the trustee
+
+        Returns:
+            SecurityIdentifier
+        '''
+        for key, value in WELL_KNOWN_SIDS.items():
+
+            if trustee.upper() == value.replace('BUILTIN', '').replace('_', ' '):
+                return SecurityIdentifier.from_formatted(key)
+
+        raise WConvException(f'Specified trustee is not well known: {trustee}')
+
     def from_formatted(sid_string: str) -> SecurityIdentifier:
         '''
         Creates an SecurityIdentifier object from an SID string.

@@ -104,3 +104,22 @@ def print_magenta(string: str, **kwargs) -> None:
         None
     '''
     print(Fore.MAGENTA + str(string) + Style.RESET_ALL, **kwargs)
+
+
+def clear_parentheses(string: str) -> str:
+    '''
+    Removes the opening and closing parantheses from a string.
+
+    Paramaters:
+        string         string to operate on
+
+    Returns:
+        cleared input string
+    '''
+    if string[0] == '(':
+        string = string[1:]
+
+    if string[-1] == ')':
+        string = string[:-1]
+
+    return string
