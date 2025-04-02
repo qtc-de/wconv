@@ -3,10 +3,10 @@
 import argparse
 
 import wconv
+import wconv.sd
 import wconv.uac
 import wconv.sid
 import wconv.objecttype
-import wconv.securitydescriptor
 
 from wconv.helpers import print_yellow, print_blue, file_to_dict
 
@@ -199,13 +199,13 @@ def main():
         elif args.command == 'sd':
 
             if args.hex:
-                desc = wconv.securitydescriptor.SecurityDescriptor.from_hex(args.sd, args.type)
+                desc = wconv.sd.SecurityDescriptor.from_hex(args.sd, args.type)
 
             elif args.sddl:
-                desc = wconv.securitydescriptor.SecurityDescriptor.from_sddl(args.sd, args.type)
+                desc = wconv.sd.SecurityDescriptor.from_sddl(args.sd, args.type)
 
             else:
-                desc = wconv.securitydescriptor.SecurityDescriptor.from_base64(args.sd, args.type)
+                desc = wconv.sd.SecurityDescriptor.from_base64(args.sd, args.type)
 
             if args.sid:
 
