@@ -51,6 +51,7 @@ parser_sid = subparsers.add_parser('sid', help='convert Windows SecurityIdentifi
 parser_sid.add_argument('sid', nargs='?', metavar='b64', help='sid value (default format: base64)')
 parser_sid.add_argument('--formatted', action='store_true', help='input is aformatted sid (S-1-*)')
 parser_sid.add_argument('--hex', action='store_true', help='input is SID as hex string (010500...)')
+parser_sid.add_argument('--to-b64', action='store_true', help='convert SID to base64 format')
 parser_sid.add_argument('--well-known', dest='known', action='store_true', help='display list of well known sids')
 
 parser_uac = subparsers.add_parser('uac', help='convert integer UserAccountControl')
@@ -148,8 +149,10 @@ def main():
 
             if args.known:
 
+                padding = get_max(wconv.sid.WELL_KNOWN_SIDS.keys())
+
                 for key, value in wconv.sid.WELL_KNOWN_SIDS.items():
-                    key = key.ljust(25)
+                    key = key.ljust(padding)
                     print_blue(f'[+] {key} - ', end='')
                     print_yellow(value)
 
@@ -158,13 +161,18 @@ def main():
                 if args.hex:
                     sid = wconv.sid.SecurityIdentifier.from_hex(args.sid)
 
-                elif args.formatted:
+                elif args.formatted or args.to_b64:
                     sid = wconv.sid.SecurityIdentifier.from_formatted(args.sid)
 
                 else:
                     sid = wconv.sid.SecurityIdentifier.from_b64(args.sid)
 
-                sid.pretty_print()
+                if args.to_b64:
+                    print_blue(f'[+] ', end='')
+                    print_yellow(sid.to_b64())
+
+                else:
+                    sid.pretty_print()
 
             else:
                 parser_sid.print_usage()
