@@ -123,3 +123,26 @@ def clear_parentheses(string: str) -> str:
         string = string[:-1]
 
     return string
+
+
+def get_max(strings: list[str]) -> int:
+    '''
+    Returns the maximum length of strings contained
+    in a list.
+
+    Paramaters:
+        strings         list containing strings
+
+    Returns:
+        length of the maximum lengthed string
+    '''
+    cur = 0
+
+    for string in strings:
+
+        new = len(string)
+
+        if new > cur:
+            cur = new
+
+    return cur
