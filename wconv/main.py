@@ -8,7 +8,7 @@ import wconv.uac
 import wconv.sid
 import wconv.objecttype
 
-from wconv.helpers import print_yellow, print_blue, file_to_dict
+from wconv.helpers import print_yellow, print_blue, file_to_dict, get_max
 
 
 typelist = [
@@ -92,6 +92,7 @@ def main():
             if args.permissions:
 
                 perm_dict = wconv.ace.get_permission_dict(args.type)
+                result_list = []
 
                 for hex_value, name in perm_dict.items():
 
@@ -102,8 +103,11 @@ def main():
                             sddl_name = sddl
 
                     hex_value = '{:08x}'.format(hex_value)
-                    print_blue(f'[+] {hex_value} - {sddl_name} - ', end='')
-                    print_yellow(name)
+                    result_list.append((hex_value, sddl_name, name))
+
+                for result in sorted(result_list, key = lambda x: x[0]):
+                    print_blue(f'[+] 0x{result[0]} - {result[1]} - ', end='')
+                    print_yellow(result[2])
 
             elif args.trustees:
 
@@ -114,30 +118,30 @@ def main():
             elif args.flags:
 
                 for key, value in wconv.ace.ACE_FLAGS.items():
-                    print_blue(f'[+] {key} - ', end='')
+                    print_blue(f'[+] {str(key).ljust(3)} - ', end='')
                     print_yellow(value)
 
             elif args.types:
 
                 for key, value in wconv.ace.ACE_TYPES.items():
-                    print_blue(f'[+] {key} - ', end='')
+                    print_blue(f'[+] {str(key).ljust(2)} - ', end='')
                     print_yellow(value)
 
             elif args.ace is not None:
 
                 if args.sddl:
-                    ace = wconv.ace.Ace.from_sddl(args.ace, args.type)
+                    ace = wconv.ace.Ace.from_sddl(args.ace)
 
                 elif args.hex:
-                    ace = wconv.ace.Ace.from_hex(args.ace, args.type)
+                    ace = wconv.ace.Ace.from_hex(args.ace)
 
                 else:
-                    ace = wconv.ace.Ace.from_int(args.ace, args.type)
+                    ace = wconv.ace.Ace.from_int(args.ace)
 
                 if args.toggle:
-                    ace.toggle_permission(args.toggle, args.type)
+                    ace.toggle_permission(args.toggle)
 
-                ace.pretty_print()
+                ace.pretty_print(args.type)
 
             else:
                 parser_ace.print_usage()

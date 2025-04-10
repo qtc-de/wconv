@@ -281,19 +281,18 @@ class Ace:
     The Ace class represents a single ACE entry inside a SDDL string.
     '''
 
-    def __init__(self, ace_type: int, ace_flags: list[str], permissions: list[str], object_type: str,
-                 inherited_object_type: str, trustee: str, numeric: int) -> None:
+    def __init__(self, ace_type: int, ace_flags: list[str], permissions: int, object_type: str,
+                 inherited_object_type: str, trustee: str | SecurityIdentifier) -> None:
         '''
         The init function takes the six different ACE components and constructs an object out of them.
 
         Parameters:
             ace_type        integer that specifies the ACE type (see ACE_TYPES)
             ace_flags       ace_flags according to the ACE specifications
-            permissions     permissions defined inside the ACE as strings
+            permissions     ACE permissions as integer
             object_type     object_type according to the sddl specifications
             i_object_type   inherited_object_type according to the sddl specifications
             trustee         trustee the ACE applies to
-            numeric         Integer ace value
 
         Returns:
             None
@@ -304,11 +303,11 @@ class Ace:
         self.object_type = object_type
         self.inherited_object_type = inherited_object_type
         self.trustee = trustee
-        self.numeric = numeric
 
     def __str__(self) -> str:
         '''
-        Outputs a simple string represenation of the ACE. Only used for debugging purposes.
+        Outputs a simple string represenation of the ACE.
+        Only used for debugging purposes.
 
         Paramaters:
             None
@@ -317,29 +316,35 @@ class Ace:
             String representation of ACE
         '''
         result = f'ACE Type:\t {ACE_TYPES[self.ace_type]}\n'
+        permissions = self.get_permissions()
 
         if self.trustee:
             result += f'Trustee:\t {self.trustee}\n'
 
-        if self.permissions:
+        if permissions:
+
             result += 'Permissions:\n'
-            for perm in self.permissions:
+
+            for perm in permissions:
                 result += f'\t\t+ {perm}\n'
 
         if self.ace_flags:
+
             result += 'ACE Flags:\n'
+
             for flag in self.ace_flags:
                 result += f'\t\t+ {flag}\n'
 
         return result[:-1]
 
-    def pretty_print(self, indent: str = ' ') -> None:
+    def pretty_print(self, indent: str = ' ', perm_type: str = 'file') -> None:
         '''
         Prints some formatted and colored output that represents the ACE. Probably not really
         ideal to be placed inside a library, but for now we can live with that.
 
         Parameters:
             indent          Spaces after the '[+]' prefix
+            perm_type       which resource the ACE is attached to
 
         Returns:
             None
@@ -377,44 +382,68 @@ class Ace:
             print_blue(f'[+]{indent}IObj Type:\t', end='')
             self.inherited_object_type.pretty_print()
 
-        if self.permissions:
+        permissions = self.get_permissions(perm_type)
+
+        if permissions:
 
             print_blue(f'[+]{indent}Permissions:')
-            for perm in self.permissions:
+
+            for perm in permissions:
                 print_blue('[+]', end='')
                 print_yellow(f'{indent}\t\t+ {perm}')
 
-    def toggle_permission(self, permissions: list[str], perm_type: str = 'file') -> None:
+    def get_permissions(self, perm_type: str = 'file') -> list[str]:
+        '''
+        Returns the permissions contained within the ACE as a list
+        of strings.
+
+        Parameters:
+            None
+
+        Returns:
+            list of permissions as strings
+        '''
+        perm_dict = get_permission_dict(perm_type)
+        permissions = []
+
+        for key, value in ACCESS_MASK_HEX.items():
+
+            if key & self.permissions:
+
+                try:
+                    permission = perm_dict[value]
+                    permissions.append(permission)
+
+                except KeyError:
+                    pass
+
+        return permissions
+
+    def toggle_permission(self, permissions: list[str]) -> None:
         '''
         Toggles the specified permissions for this ACE.
 
         Parameters:
             permissions     List of permission to toggle (GA, GR, GW, GE, CC, ...)
-            perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
             None
         '''
-        perm_dict = get_permission_dict(perm_type)
-
         for permission in permissions:
 
             try:
                 hex_value = wconv.sddl.ACCESS_MASK_HEX[permission]
-
-                self.numeric = self.numeric ^ hex_value
-                self.permissions.append(perm_dict[hex_value])
+                self.permissions ^= hex_value
 
             except KeyError:
                 raise WConvException(f'Ace.toggle_permission(... - Unknown permission name: {permission}')
 
-    def from_sddl(ace_string: str, perm_type: str = 'file') -> Ace:
+    def from_sddl(ace_string: str) -> Ace:
         '''
         Parses an ace from a string in SDDL representation (e.g. A;OICI;FA;;;BA).
 
         Parameters:
             ace_string      ACE string in sddl format
-            perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
             ace_object
@@ -428,7 +457,7 @@ class Ace:
 
         ace_type = wconv.sddl.SDDL_ACE_TYPES[ace_type]
         ace_flags = wconv.sddl.map_ace_flags(ace_flags)
-        permissions = wconv.sddl.get_ace_permissions(perms, perm_type)
+        permissions = wconv.sddl.get_ace_numeric(perms)
         ace_int = wconv.sddl.get_ace_numeric(perms)
 
         if object_type:
@@ -440,44 +469,28 @@ class Ace:
         if trustee in wconv.sddl.TRUSTEES:
             trustee = wconv.sddl.TRUSTEES[trustee]
 
-        return Ace(ace_type, ace_flags, permissions, object_type, inherited_object_type, trustee, ace_int)
+        return Ace(ace_type, ace_flags, permissions, object_type, inherited_object_type, trustee)
 
-    def from_int(integer: str | int, perm_type: str = 'file') -> Ace:
+    def from_int(integer: str | int) -> Ace:
         '''
         Parses an ace from an integer value in string representation.
 
         Parameters:
             integer         Integer value as string (hex also allowed)
-            perm_type       Object type the sddl applies to (file, service, ...)
 
         Returns:
             ace_object
         '''
-        ace_int = get_int(integer)
+        permissions = get_int(integer)
 
-        perm_dict = get_permission_dict(perm_type)
-        permissions = []
+        return Ace(None, None, permissions, None, None, None)
 
-        for key, value in perm_dict.items():
-
-            if key & ace_int:
-
-                try:
-                    permissions.append(value)
-
-                except KeyError:
-                    # Ignore matches on grouped permissions like FA, FR, FW...
-                    pass
-
-        return Ace(None, None, permissions, None, None, None, ace_int)
-
-    def from_bytes(byte_data: bytes, perm_type: str = 'file') -> Ace:
+    def from_bytes(byte_data: bytes) -> Ace:
         '''
         Parses an ACE from a bytes object.
 
         Parameters:
             byte_data       byte data of the ACE
-            perm_type       Object type the ACE applies to (file, service, ...)
 
         Returns:
             ace_object
@@ -512,36 +525,21 @@ class Ace:
         ace_perms = struct.unpack('<I', byte_data[4:8])[0]
         trustee = SecurityIdentifier(byte_data[position:], False)
 
-        perm_dict = get_permission_dict(perm_type)
-        permissions = []
+        return Ace(ace_type, ace_flag_list, ace_perms, object_type, object_type_inherited, trustee)
 
-        for key, value in ACCESS_MASK_HEX.items():
-
-            if key & ace_perms:
-
-                try:
-                    permission = perm_dict[value]
-                    permissions.append(permission)
-
-                except KeyError:
-                    pass
-
-        return Ace(ace_type, ace_flag_list, permissions, object_type, object_type_inherited, trustee, ace_perms)
-
-    def from_hex(hex_str: str, perm_type: str = 'file') -> Ace:
+    def from_hex(hex_str: str) -> Ace:
         '''
         Parses an ACE from a hex string.
 
         Parameters:
             hex_string      hex string representing an ACE
-            perm_type       Object type the ACE applies to (file, service, ...)
 
         Returns:
             ace_object
         '''
         try:
             data = binascii.unhexlify(hex_str)
-            return Ace.from_bytes(data, perm_type)
+            return Ace.from_bytes(data)
 
         except binascii.Error:
             raise WConvException(f'Ace.from_hex(... - Invalid hex string: {hex_string}')
