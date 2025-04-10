@@ -419,7 +419,6 @@ class Ace:
         Returns:
             ace_object
         '''
-
         try:
             ace_string = wconv.helpers.clear_parentheses(ace_string)
             ace_type, ace_flags, perms, object_type, inherited_object_type, trustee = ace_string.split(';', 5)
@@ -478,7 +477,7 @@ class Ace:
 
         Parameters:
             byte_data       byte data of the ACE
-            perm_type       Object type the sddl applies to (file, service, ...)
+            perm_type       Object type the ACE applies to (file, service, ...)
 
         Returns:
             ace_object
@@ -535,7 +534,7 @@ class Ace:
 
         Parameters:
             hex_string      hex string representing an ACE
-            perm_type       Object type the sddl applies to (file, service, ...)
+            perm_type       Object type the ACE applies to (file, service, ...)
 
         Returns:
             ace_object
