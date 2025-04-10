@@ -52,7 +52,7 @@ class Acl:
 
         Parameters:
             sddl_string     ACL portion of an sddl string
-            perm_type       Object type the descriptor applies to (file, service, ...)
+            perm_type       Object type the ACL applies to (file, service, ...)
 
         Returns:
             Acl
