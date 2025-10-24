@@ -222,13 +222,13 @@ def main():
             if args.sid:
 
                 for ace in desc.filter_sid(args.sid):
-                    ace.pretty_print()
+                    ace.pretty_print(' ', args.type)
                     print_blue('[+]')
 
             if args.adminsd:
 
                 for ace in desc.filter_inherited():
-                    ace.pretty_print()
+                    ace.pretty_print(' ', args.type)
                     print_blue('[+]')
 
             else:
