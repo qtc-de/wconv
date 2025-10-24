@@ -141,7 +141,7 @@ def main():
                 if args.toggle:
                     ace.toggle_permission(args.toggle)
 
-                ace.pretty_print(args.type)
+                ace.pretty_print(' ', args.type)
 
             else:
                 parser_ace.print_usage()

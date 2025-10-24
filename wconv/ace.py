@@ -362,9 +362,9 @@ class Ace:
             else:
                 print_yellow(self.trustee)
 
-        if self.numeric:
+        if self.permissions:
             print_blue(f'[+]{indent}Numeric:\t', end='')
-            print_yellow('0x{:08x}'.format(self.numeric))
+            print_yellow('0x{:08x}'.format(self.permissions))
 
         if self.ace_flags:
 
@@ -406,9 +406,9 @@ class Ace:
         perm_dict = get_permission_dict(perm_type)
         permissions = []
 
-        for key, value in ACCESS_MASK_HEX.items():
+        for key, value in wconv.sddl.ACCESS_MASK_HEX.items():
 
-            if key & self.permissions:
+            if value & self.permissions:
 
                 try:
                     permission = perm_dict[value]
