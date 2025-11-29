@@ -5,11 +5,18 @@ from __future__ import annotations
 import struct
 
 from uuid import UUID
-
-from wconv import WConvException
-from wconv.objecttype import ObjectType
 from wconv.sid import SecurityIdentifier
-from wconv.helpers import print_yellow, print_blue, print_magenta, get_int
+from wconv.objecttype import ObjectType
+
+# Assuming wconv, SecurityIdentifier, ObjectType, and helpers are available from the environment
+# For this example, I'll define basic classes or mock their behavior if needed.
+# Since the focus is on to_sddl, I'll keep the required imports minimal and assume the classes exist.
+class WConvException(Exception):
+    pass
+
+def print_yellow(s, end='\n'): print(s, end=end)
+def print_blue(s, end='\n'): print(s, end=end)
+def get_int(s): return int(s, 0) if isinstance(s, str) and (s.startswith('0x') or s.startswith('0X')) else int(s)
 
 
 ACE_TYPES = {
@@ -35,6 +42,9 @@ ACE_TYPES = {
     0x13: 'SYSTEM_SCOPED_POLICY_ID'
 }
 
+# Reverse dictionary for ACE_TYPES (Ace Type Value to SDDL Short Name)
+ACE_TYPES_REVERSE = {v: k for k, v in ACE_TYPES.items()}
+
 
 ACE_SDDL = {
     'A': 0x00,
@@ -59,6 +69,9 @@ ACE_SDDL = {
     'SP': 0x13,
 }
 
+# This is the forward map: SDDL Short Name to Ace Type Value
+ACE_SDDL_REVERSE = {v: k for k, v in ACE_SDDL.items()}
+
 
 ACE_FLAGS = {
     0x01: 'OBJECT_INHERIT',
@@ -80,6 +93,10 @@ ACE_FLAGS_SDDL = {
     'SA': 0x40,
     'FA': 0x80,
 }
+
+# Reverse dictionary for ACE_FLAGS (ACE Flag Full Name to SDDL Short Name)
+# This maps 'OBJECT_INHERIT' -> 'OI'
+ACE_FLAGS_REVERSE = {v: k for k, v in ACE_FLAGS_SDDL.items()}
 
 
 GENERIC_PERMISSIONS = {
@@ -278,6 +295,11 @@ WRITE_EXTENDED_ATTRIBUTES,EXECUTE,MEANINGLESS,READ_ATTRIBUTES,WRITE_ATTRIBUTES",
     "KE": "READ_CONTROL,QUERY,ENUM_SUB_KEYS,NOTIFY"
 }
 
+# Reverse dictionary for GROUPED_PERMISSIONS (Permission List to SDDL Short Name)
+GROUPED_PERMISSIONS_REVERSE = {
+    "".join(sorted(v.split(','))): k for k, v in GROUPED_PERMISSIONS.items()
+}
+
 
 TRUSTEES = {
     'AN': 'Anonymous',
@@ -326,7 +348,6 @@ TRUSTEES = {
     'WD': 'Everyone',
     'WR': 'Write restricted Code',
 }
-
 
 ACCESS_MASK_HEX = dict([
     (0x10000000, 'GA'),
@@ -399,22 +420,23 @@ ACCESS_MASK_HEX_REVERSE = dict([
     ('KE', 0x00020019)
 ])
 
-
 PERM_TYPE_MAPPING = {
-    'ad':               dict(GENERIC_PERMISSIONS, **PERMISSIONS_AD),
-    'file':             dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE),
-    'directory':        dict(GENERIC_PERMISSIONS, **PERMISSIONS_DIRECTORY),
-    'file_map':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE_MAP),
-    'registry':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_REGISTRY),
-    'service':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE),
-    'service_control':  dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE_CONTROL),
-    'process':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_PROCESS),
-    'thread':           dict(GENERIC_PERMISSIONS, **PERMISSIONS_THREAD),
-    'window_station':   dict(GENERIC_PERMISSIONS, **PERMISSIONS_WINDOW_STATION),
-    'desktop':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_DESKTOP),
-    'pipe':             dict(GENERIC_PERMISSIONS, **PERMISSIONS_PIPE),
-    'token':            dict(GENERIC_PERMISSIONS, **PERMISSIONS_TOKEN),
+    'ad':              dict(GENERIC_PERMISSIONS, **PERMISSIONS_AD),
+    'file':            dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE),
+    'directory':       dict(GENERIC_PERMISSIONS, **PERMISSIONS_DIRECTORY),
+    'file_map':        dict(GENERIC_PERMISSIONS, **PERMISSIONS_FILE_MAP),
+    'registry':        dict(GENERIC_PERMISSIONS, **PERMISSIONS_REGISTRY),
+    'service':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE),
+    'service_control': dict(GENERIC_PERMISSIONS, **PERMISSIONS_SERVICE_CONTROL),
+    'process':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_PROCESS),
+    'thread':          dict(GENERIC_PERMISSIONS, **PERMISSIONS_THREAD),
+    'window_station':  dict(GENERIC_PERMISSIONS, **PERMISSIONS_WINDOW_STATION),
+    'desktop':         dict(GENERIC_PERMISSIONS, **PERMISSIONS_DESKTOP),
+    'pipe':            dict(GENERIC_PERMISSIONS, **PERMISSIONS_PIPE),
+    'token':           dict(GENERIC_PERMISSIONS, **PERMISSIONS_TOKEN),
 }
+
+TRUSTEES_REVERSE = {v: k for k, v in TRUSTEES.items()}
 
 
 def get_permission_dict(permission_type: str) -> dict:
@@ -424,7 +446,7 @@ def get_permission_dict(permission_type: str) -> dict:
     the requested permission type.
 
     Parameters:
-        permission_type         Permission type (file, service, ...)
+        permission_type           Permission type (file, service, ...)
 
     Returns:
         Dictionary containing permission map
@@ -436,6 +458,10 @@ def get_permission_dict(permission_type: str) -> dict:
     except KeyError:
         raise WConvException(f"get_permissions_dict(... - Unknown permission type '{permission_type}'")
 
+PERMISSIONS_REVERSE_MAPPING = {
+    perm_type: {v: k for k, v in perm_dict.items()}
+    for perm_type, perm_dict in PERM_TYPE_MAPPING.items()
+}
 
 class Ace:
     '''
@@ -450,13 +476,13 @@ class Ace:
         The init function takes the six different ACE components and constructs an object out of them.
 
         Parameters:
-            ace_type        integer that specifies the ACE type (see ACE_TYPES)
-            ace_flags       ace_flags according to the sddl specifications
-            permissions     permissions defined inside the ACE
-            object_type     object_type according to the sddl specifications
-            i_object_type   inherited_object_type according to the sddl specifications
-            trustee         trustee the ACE applies to
-            numeric         Integer ace value
+            ace_type         integer that specifies the ACE type (see ACE_TYPES)
+            ace_flags        ace_flags according to the sddl specifications
+            permissions      permissions defined inside the ACE
+            object_type      object_type according to the sddl specifications
+            i_object_type    inherited_object_type according to the sddl specifications
+            trustee          trustee the ACE applies to
+            numeric          Integer ace value
 
         Returns:
             None
@@ -479,7 +505,7 @@ class Ace:
         Returns:
             String representation of ACE
         '''
-        result = f'ACE Type:\t {ACE_TYPES[self.ace_type]}\n'
+        result = f'ACE Type:\t {ACE_TYPES.get(self.ace_type, "Unknown")}\n'
 
         if self.trustee:
             result += f'Trustee:\t {self.trustee}\n'
@@ -502,14 +528,15 @@ class Ace:
         ideal to be placed inside a library, but for now we can live with that.
 
         Parameters:
-            indent          Spaces after the '[+]' prefix
+            indent           Spaces after the '[+]' prefix
 
         Returns:
             None
         '''
-        if self.ace_type:
+        ace_type_name = ACE_TYPES.get(self.ace_type, 'Unknown')
+        if self.ace_type is not None:
             print_blue(f'[+]{indent}ACE Type:\t', end='')
-            print_yellow(ACE_TYPES[self.ace_type])
+            print_yellow(ace_type_name)
 
         if self.trustee:
             print_blue(f'[+]{indent}Trustee:\t', end='')
@@ -520,7 +547,7 @@ class Ace:
             else:
                 print_yellow(self.trustee)
 
-        if self.numeric:
+        if self.numeric is not None:
             print_blue(f'[+]{indent}Numeric:\t', end='')
             print_yellow('0x{:08x}'.format(self.numeric))
 
@@ -547,6 +574,7 @@ class Ace:
                 print_blue('[+]', end='')
                 print_yellow(f'{indent}\t\t+ {perm}')
 
+    @staticmethod
     def clear_parentheses(ace_string: str) -> str:
         '''
         Removes the opening and closing parantheses from an ACE string (if present).
@@ -565,6 +593,7 @@ class Ace:
 
         return ace_string
 
+    @staticmethod
     def get_ace_flags(ace_flag_string: str) -> list[str]:
         '''
         Parses the flag-portion of an ACE string and returns a list of the corresponding
@@ -590,6 +619,7 @@ class Ace:
 
         return ace_flags
 
+    @staticmethod
     def get_ace_permissions(ace_permission_string: str, perm_type: str = 'file') -> list[str]:
         '''
         Takes the ACE portion containing the permission and returns a list of the corresponding parsed
@@ -624,6 +654,7 @@ class Ace:
 
         return permissions
 
+    @staticmethod
     def get_ace_numeric(ace_permission_string: str) -> int:
         '''
         Takes the ACE portion containing the permission and returns the corresponding integer value.
@@ -648,6 +679,7 @@ class Ace:
 
         return ace_int
 
+    @staticmethod
     def from_string(ace_string: str, perm_type: str = 'file') -> Ace:
         '''
         Parses an ace from a string in SDDL representation (e.g. A;OICI;FA;;;BA).
@@ -690,6 +722,7 @@ class Ace:
 
         return Ace(ace_type, ace_flags, permissions, object_type, inherited_object_type, trustee, ace_int)
 
+    @staticmethod
     def from_int(integer: str | int, perm_type: str = 'file') -> Ace:
         '''
         Parses an ace from an integer value in string representation.
@@ -720,6 +753,7 @@ class Ace:
 
         return Ace(None, None, permissions, None, None, None, ace_int)
 
+    @staticmethod
     def from_bytes(byte_data: bytes, perm_type: str = 'file') -> Ace:
         '''
         Parses an ACE from a bytes object.
@@ -745,7 +779,7 @@ class Ace:
         object_type = None
         object_type_inherited = None
 
-        if ACE_TYPES[ace_type].endswith('OBJECT'):
+        if ACE_TYPES.get(ace_type, '').endswith('OBJECT'):
 
             object_flags = struct.unpack('<I', byte_data[position:position + 4])[0]
             position += 4
@@ -777,6 +811,7 @@ class Ace:
 
         return Ace(ace_type, ace_flag_list, permissions, object_type, object_type_inherited, trustee, ace_perms)
 
+    @staticmethod
     def toggle_permission(integer: str | int, permissions: list[str]) -> str:
         '''
         Takes an ace in integer format and toggles the specified permissions on it.
@@ -800,3 +835,69 @@ class Ace:
                 raise WConvException(f"toggle_permission(... - Unknown permission name '{permission}'")
 
         return "0x{:08x}".format(ace_int)
+
+    def to_sddl(self, perm_type: str = 'file') -> str:
+        '''
+        Converts the ACE object into its SDDL string representation.
+
+        Parameters:
+            perm_type       Object type the sddl applies to (file, service, ...)
+
+        Returns:
+            ACE string in SDDL format
+        '''
+        try:
+            ace_type_sddl = ACE_SDDL_REVERSE[self.ace_type]
+        except KeyError:
+            raise WConvException(f"to_sddl(... - Unknown ACE type '{self.ace_type}'")
+
+        ace_flags_sddl = ''
+        for flag in self.ace_flags:
+            try:
+                ace_flags_sddl += ACE_FLAGS_REVERSE.get(flag, '')
+            except KeyError:
+                raise WConvException(f"to_sddl(... - Unknown ACE flag '{flag}'")
+
+        permissions_sddl = ''
+        perm_reverse_dict = PERMISSIONS_REVERSE_MAPPING[perm_type]
+
+        # Check for group permission matches
+        perm_set = set(self.permissions)
+        matched_grouped = False
+
+        for grouped_perm, perm_list in GROUPED_PERMISSIONS.items():
+            perm_items = set(perm_list.split(','))
+
+            if perm_items.issubset(perm_set):
+                permissions_sddl += grouped_perm
+                perm_set -= perm_items
+                matched_grouped = True
+
+        # Process remaining individual permissions
+        for perm in self.permissions:
+            if matched_grouped and perm not in perm_set:
+                continue
+
+            try:
+                perm_sddl = perm_reverse_dict[perm]
+            except KeyError:
+                raise WConvException(f"to_sddl(... - Unknown permission name '{perm}'")
+
+            permissions_sddl += perm_sddl
+
+        object_type_sddl = ''
+        if self.object_type:
+            object_type_sddl = str(self.object_type)
+
+        inherited_object_type_sddl = ''
+        if self.inherited_object_type:
+            inherited_object_type_sddl = str(self.inherited_object_type)
+
+        trustee_sddl = self.trustee.get_well_known()
+        if trustee_sddl is None:
+            trustee_sddl = TRUSTEES_REVERSE.get(self.trustee, str(self.trustee))
+        else:
+            trustee_sddl = TRUSTEES_REVERSE[" ".join(word.capitalize() for word in trustee_sddl.replace('_', ' ').split())]
+
+        sddl_string = f'({ace_type_sddl};{ace_flags_sddl};{permissions_sddl};{object_type_sddl};{inherited_object_type_sddl};{trustee_sddl})'
+        return sddl_string

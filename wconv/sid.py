@@ -46,7 +46,7 @@ WELL_KNOWN_SIDS = {
     "S-1-5-21-[-0-9]+-500": "ADMINISTRATOR",
     "S-1-5-21-[-0-9]+-501": "GUEST",
     "S-1-5-21-[-0-9]+-502": "KRBTGT",
-    "S-1-5-21-[-0-9]+-512": "DOMAIN_ADMINS",
+    "S-1-5-21-[-0-9]+-512": "DOMAIN_ADMINS",   
     "S-1-5-21-[-0-9]+-513": "DOMAIN_USERS",
     "S-1-5-21-[-0-9]+-514": "DOMAIN_GUESTS",
     "S-1-5-21-[-0-9]+-515": "DOMAIN_COMPUTERS",
@@ -189,7 +189,7 @@ class SecurityIdentifier:
         dash_count = self.binary[1]
         return dash_count * 4 + 8
 
-    def get_well_known(sid_string: str) -> str:
+    def get_well_known(self) -> str:
         '''
         Get the well known name for the specified SID string. Notice that the
         WELL_KNOWN_SIDS dictionary contains regex like expression. A simple
@@ -203,7 +203,7 @@ class SecurityIdentifier:
         '''
         for key, value in WELL_KNOWN_SIDS.items():
 
-            if re.match(f'^{key}$', sid_string):
+            if re.match(f'^{key}$', str(self)):
                 return value
 
         return None
@@ -260,6 +260,7 @@ class SecurityIdentifier:
             result += '-'
 
         return result[0:-1]
+
 
     def to_b64(self) -> str:
         '''

@@ -613,7 +613,7 @@ $ wconv uac --mapping
 
 ----
 
-The *DESC module* supports operations to convert *SecurityDescriptors* into human readable form.
+The *DESC module* supports operations to convert *SecurityDescriptors* into human readable form or SDDL format.
 
 ```console
 $ wconv desc -h
@@ -625,6 +625,7 @@ positional arguments:
 options:
   -h, --help   show this help message and exit
   --hex        specify the descriptor in hex format instead
+  --to-sddl    convert the descriptor to SDDL format
   --type type  permission type (default: ad)
   --sid sid    filter for a specific sid
   --adminsd    filter out inherited ACEs
@@ -721,7 +722,14 @@ $ wconv desc AQAEjKQgAADAIAAAAAAAA... --adminsd
 [+] 		+ DS_READ_PROP
 [+] 		+ DS_WRITE_PROP
 ```
+##### Convert SecurityDescriptor to SDDL
 
+Converts the parsed SecurityDescriptor into SDDL format.
+
+```console
+$ wconv desc --hex '0100049c20...' --to-sddl --type ad
+O:S-1-5-21-858338346-3861030516-3975240472-519D:(OA;;RPWPCR;0e10c968-78fb-11d2-90d4-00c04f79dc55;;DA)(OA;;RPWPCR;0e10c968-78fb-11d2-90d4-00c04f79dc55;;DC)(OA;;RPWPCR;0e10c968-78fb-11d2-90d4-00c04f79dc55;;EA)(A;;SDRCWDWOCCDCLCSWRPWPDTLO;;;DA)(A;;SDRCWDWOCCDCLCSWRPWPDTLO;;;EA)(A;;RCLCRPLO;;;AU)
+```
 
 ### Library Information
 

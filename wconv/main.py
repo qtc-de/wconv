@@ -68,6 +68,7 @@ parser_uac.add_argument('--toggle', metavar='flag', action='append', default=[],
 parser_desc = subparsers.add_parser('desc', help='convert security descriptor')
 parser_desc.add_argument('desc', metavar='b64', help='security descriptor in base64')
 parser_desc.add_argument('--hex', action='store_true', help='specify the descriptor in hex format instead')
+parser_desc.add_argument('--to-sddl', action='store_true', dest='to_sddl', help='convert the descriptor to SDDL format')
 parser_desc.add_argument('--type', metavar='type', choices=typelist, default='ad', help='permission type (default: ad)')
 parser_desc.add_argument('--sid', metavar='sid', help='filter for a specific sid')
 parser_desc.add_argument('--adminsd', action='store_true', help='filter out inherited ACEs')
@@ -238,20 +239,23 @@ def main():
             else:
                 desc = wconv.securitydescriptor.SecurityDescriptor.from_base64(args.desc, args.type)
 
-            if args.sid:
+            if not args.to_sddl:
+                if args.sid:
 
-                for ace in desc.filter_sid(args.sid):
-                    ace.pretty_print()
-                    print_blue('[+]')
+                    for ace in desc.filter_sid(args.sid):
+                        ace.pretty_print()
+                        print_blue('[+]')
 
-            if args.adminsd:
+                if args.adminsd:
 
-                for ace in desc.filter_inherited():
-                    ace.pretty_print()
-                    print_blue('[+]')
+                    for ace in desc.filter_inherited():
+                        ace.pretty_print()
+                        print_blue('[+]')
 
+                else:
+                    desc.pretty_print()
             else:
-                desc.pretty_print()
+                print(desc.to_sddl(perm_type=args.type))
 
         ##########################################################################
         #######                     No Command Selected                     ######
@@ -262,3 +266,6 @@ def main():
     except wconv.WConvException as e:
         print("[-] Error: " + str(e))
         sys.exit(1)
+
+if __name__ == "__main__":
+    main()

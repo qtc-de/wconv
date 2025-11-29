@@ -37,10 +37,12 @@ class SecurityDescriptor:
             None
         '''
         print_blue(f'[+]{indent}Owner:\t', end='')
-        self.owner.pretty_print()
+        if self.owner:
+            self.owner.pretty_print()
 
         print_blue(f'[+]{indent}Group:\t', end='')
-        self.group.pretty_print()
+        if self.group:
+            self.group.pretty_print()
 
         print_blue(f'[+]{indent}Ace Count:\t', end='')
         print_yellow(self.dacl.ace_count)
@@ -142,3 +144,36 @@ class SecurityDescriptor:
             dacl = Acl.from_bytes(byte_data[dacl_offset:], perm_type)
 
         return SecurityDescriptor(owner_sid, group_sid, sacl, dacl)
+
+    def print_aces(self) -> None:
+        '''
+        Prints the formatted security descriptor ACEs only. 
+        '''
+        for ace in self.dacl.aces:
+            print(ace.to_sddl())
+    
+    def to_sddl(self, perm_type: str = 'file') -> str:
+        '''
+        Converts the SecurityDescriptor to SDDL format.
+
+        Parameters:
+            perm_type       Object type the descriptor applies to (file, service, ...)
+
+        Returns:
+            SDDL string
+        '''
+        sddl_parts = []
+
+        # Owner
+        if self.owner:
+            sddl_parts.append(f'O:{self.owner}')
+
+        # Group
+        if self.group:
+            sddl_parts.append(f'G:{self.group}')
+
+        # DACL
+        if self.dacl:
+            sddl_parts.append(f'{self.dacl.to_sddl(perm_type=perm_type)}')
+
+        return ''.join(sddl_parts)

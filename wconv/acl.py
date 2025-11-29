@@ -45,3 +45,24 @@ class Acl:
             pos += ace_length
 
         return Acl(revision, ace_count, ace_list)
+
+    def to_sddl(self, acl_type: str = 'D', perm_type: str = 'file') -> str:
+        '''
+        Converts the Acl object (a collection of ACEs) into its SDDL string representation.
+
+        Parameters:
+            acl_type  The type tag for the ACL (D for DACL, S for SACL). Defaults to 'D'.
+            perm_type The object type the descriptor applies to (passed to Ace.to_sddl).
+
+        Returns:
+            ACL string in SDDL format (e.g., "D:(A;;...)(A;;...)")
+        '''
+        ace_sddl_strings = []
+        for ace in self.aces:
+            ace_sddl_strings.append(ace.to_sddl(perm_type=perm_type))
+
+        aces_sddl = "".join(ace_sddl_strings)
+
+        acl_sddl = f'{acl_type}:{aces_sddl}'
+
+        return acl_sddl
